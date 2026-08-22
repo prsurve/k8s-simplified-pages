@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>You don't need a Service Mesh. Until you do. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .reply p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin: 0;
+  }
+  .handle {
+    margin-top: 64px;
+    font-size: 15px;
+    color: #6E7681;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the {{PLACEHOLDER}} string-replace pattern from renderSlides.ts.
+    Placeholders: You don't need a Service Mesh. Until you do. concept A Service Mesh is a sidecar container that sits next to every pod and handles network stuff your code shouldn't care about.
+
+Istio and Linkerd inject proxies that do retries, mTLS, circuit breaking, and traffic shaping — so your Java, Go, and Python services don't need to implement it themselves. At scale, it's a lifesaver. Before 10 services, it's overkill.
+
+Takeaway: Service Mesh = network features as infrastructure, not application code.
+
+How many microservices are you running? Drop your count below 👇
+
+—
+@k8s.simplified · Kubernetes for DevOps beginners <div class="reply"><h2>AMBIENT MODE</h2><p>Great question, let's go deep on it. Istio's ambient mesh (GA since 1.24) fundamentally changes the data plane architecture compared to classic sidecar mode:
+
+Sidecar mode (the default until recently): every pod gets an Envoy proxy injected as a second container. That proxy intercepts all inbound/outbound traffic via iptables rules. You get full L4+L7 capability per pod (mTLS, retries, circuit breaking, traffic shaping) but you pay for it with 2x container count, a memory/CPU tax per pod (Envoy isn't free, typically 40-100MB+ per sidecar), slower pod startup (sidecar has to be ready before traffic flows), and a genuinely painful upgrade story (rolling sidecar upgrades mean restarting every workload pod).
+
+Ambient mode: splits the mesh into two layers instead of one proxy-per-pod. A shared ztunnel (one per node, not per pod) handles L4 — mTLS via a custom protocol called HBONE (HTTP-based overlay network encapsulation), plus basic telemetry and authorization — for every pod on that node. There's no sidecar injection at all, so pod startup is faster and resource overhead per-pod drops dramatically since you're not running N Envoys for N pods, just one ztunnel per node.
+
+For L7 features (HTTP-aware retries, circuit breaking, fine-grained traffic splitting, canary routing) you opt in per-namespace by deploying a waypoint proxy — this is still Envoy, but shared across a namespace instead of injected per-pod, and traffic only routes through it if a workload actually needs L7 policy. So you pay the L7 tax only where you use L7 features, instead of everywhere by default.
+
+The real tradeoff: ambient is newer, so its L7 feature parity and battle-testing under complex traffic-shaping scenarios lags sidecar mode — if you're doing heavy canary/A-B/mirroring work today, sidecar mode is still the more proven path. And routing through a waypoint adds an extra network hop versus a co-located sidecar, though in practice ztunnel's HBONE path is fast enough that this rarely shows up as a real bottleneck for L4-only traffic.
+
+When to pick which: if you mainly want mTLS + basic observability across a dense cluster and want to minimize resource overhead, ambient is the newer, leaner choice. If you're leaning hard on L7 traffic management (weighted routing, fault injection, detailed retry budgets) across most of your services, sidecar mode is still the safer bet today. You can also run them side by side during migration — ambient doesn't require an all-or-nothing cutover.</p></div> @k8s.simplified
+    <div class="reply"><h2>AMBIENT MODE</h2><p>Great question, let's go deep on it. Istio's ambient mesh (GA since 1.24) fundamentally changes the data plane architecture compared to classic sidecar mode:
+
+Sidecar mode (the default until recently): every pod gets an Envoy proxy injected as a second container. That proxy intercepts all inbound/outbound traffic via iptables rules. You get full L4+L7 capability per pod (mTLS, retries, circuit breaking, traffic shaping) but you pay for it with 2x container count, a memory/CPU tax per pod (Envoy isn't free, typically 40-100MB+ per sidecar), slower pod startup (sidecar has to be ready before traffic flows), and a genuinely painful upgrade story (rolling sidecar upgrades mean restarting every workload pod).
+
+Ambient mode: splits the mesh into two layers instead of one proxy-per-pod. A shared ztunnel (one per node, not per pod) handles L4 — mTLS via a custom protocol called HBONE (HTTP-based overlay network encapsulation), plus basic telemetry and authorization — for every pod on that node. There's no sidecar injection at all, so pod startup is faster and resource overhead per-pod drops dramatically since you're not running N Envoys for N pods, just one ztunnel per node.
+
+For L7 features (HTTP-aware retries, circuit breaking, fine-grained traffic splitting, canary routing) you opt in per-namespace by deploying a waypoint proxy — this is still Envoy, but shared across a namespace instead of injected per-pod, and traffic only routes through it if a workload actually needs L7 policy. So you pay the L7 tax only where you use L7 features, instead of everywhere by default.
+
+The real tradeoff: ambient is newer, so its L7 feature parity and battle-testing under complex traffic-shaping scenarios lags sidecar mode — if you're doing heavy canary/A-B/mirroring work today, sidecar mode is still the more proven path. And routing through a waypoint adds an extra network hop versus a co-located sidecar, though in practice ztunnel's HBONE path is fast enough that this rarely shows up as a real bottleneck for L4-only traffic.
+
+When to pick which: if you mainly want mTLS + basic observability across a dense cluster and want to minimize resource overhead, ambient is the newer, leaner choice. If you're leaning hard on L7 traffic management (weighted routing, fault injection, detailed retry budgets) across most of your services, sidecar mode is still the safer bet today. You can also run them side by side during migration — ambient doesn't require an all-or-nothing cutover.</p></div> is a pre-built HTML fragment (one .reply block per
+    trigger_replies entry), not plain text -- escaping happens at the call
+    site before assembly, not here.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>You don't need a Service Mesh. Until you do.</h1>
+    <div class="caption">A Service Mesh is a sidecar container that sits next to every pod and handles network stuff your code shouldn't care about.
+
+Istio and Linkerd inject proxies that do retries, mTLS, circuit breaking, and traffic shaping — so your Java, Go, and Python services don't need to implement it themselves. At scale, it's a lifesaver. Before 10 services, it's overkill.
+
+Takeaway: Service Mesh = network features as infrastructure, not application code.
+
+How many microservices are you running? Drop your count below 👇
+
+—
+@k8s.simplified · Kubernetes for DevOps beginners</div>
+    <div class="reply"><h2>AMBIENT MODE</h2><p>Great question, let's go deep on it. Istio's ambient mesh (GA since 1.24) fundamentally changes the data plane architecture compared to classic sidecar mode:
+
+Sidecar mode (the default until recently): every pod gets an Envoy proxy injected as a second container. That proxy intercepts all inbound/outbound traffic via iptables rules. You get full L4+L7 capability per pod (mTLS, retries, circuit breaking, traffic shaping) but you pay for it with 2x container count, a memory/CPU tax per pod (Envoy isn't free, typically 40-100MB+ per sidecar), slower pod startup (sidecar has to be ready before traffic flows), and a genuinely painful upgrade story (rolling sidecar upgrades mean restarting every workload pod).
+
+Ambient mode: splits the mesh into two layers instead of one proxy-per-pod. A shared ztunnel (one per node, not per pod) handles L4 — mTLS via a custom protocol called HBONE (HTTP-based overlay network encapsulation), plus basic telemetry and authorization — for every pod on that node. There's no sidecar injection at all, so pod startup is faster and resource overhead per-pod drops dramatically since you're not running N Envoys for N pods, just one ztunnel per node.
+
+For L7 features (HTTP-aware retries, circuit breaking, fine-grained traffic splitting, canary routing) you opt in per-namespace by deploying a waypoint proxy — this is still Envoy, but shared across a namespace instead of injected per-pod, and traffic only routes through it if a workload actually needs L7 policy. So you pay the L7 tax only where you use L7 features, instead of everywhere by default.
+
+The real tradeoff: ambient is newer, so its L7 feature parity and battle-testing under complex traffic-shaping scenarios lags sidecar mode — if you're doing heavy canary/A-B/mirroring work today, sidecar mode is still the more proven path. And routing through a waypoint adds an extra network hop versus a co-located sidecar, though in practice ztunnel's HBONE path is fast enough that this rarely shows up as a real bottleneck for L4-only traffic.
+
+When to pick which: if you mainly want mTLS + basic observability across a dense cluster and want to minimize resource overhead, ambient is the newer, leaner choice. If you're leaning hard on L7 traffic management (weighted routing, fault injection, detailed retry budgets) across most of your services, sidecar mode is still the safer bet today. You can also run them side by side during migration — ambient doesn't require an all-or-nothing cutover.</p></div>
+    <div class="handle">@k8s.simplified</div>
+  </div>
+</body>
+</html>
