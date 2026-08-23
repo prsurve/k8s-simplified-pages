@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>My pod's been restarting for 3 minutes. Let me show you how I actually debug CrashLoopBackOff. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .reply p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin: 0;
+  }
+  .handle {
+    margin-top: 64px;
+    font-size: 15px;
+    color: #6E7681;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the {{PLACEHOLDER}} string-replace pattern from renderSlides.ts.
+    Placeholders: My pod's been restarting for 3 minutes. Let me show you how I actually debug CrashLoopBackOff. war_story I used to panic every time I saw CrashLoopBackOff.
+
+Now I follow the same 3-step order every single time: describe for exit codes, logs --previous for the crash reason, then check if dependencies are actually ready.
+
+The --previous flag changed everything for me — most beginners don't know crashed containers need that flag to see their logs.
+
+Save this for the next time your pod won't start. What's your go-to first command when debugging? Drop 'DEBUG' below and I'll send you my full CrashLoopBackOff checklist.
+
+—
+@k8s.simplified · Real K8s for DevOps beginners
+
+"My pod's stuck in CrashLoopBackOff. Here's my exact debugging order. Step one: describe the pod. I'm looking for the Last State and Exit Code. Exit code 1 with reason Error. That's an application crash, not a config issue. Step two: Check the logs. Use --previous flag to see logs from the crashed container. There it is. Connection refused to the database. My app can't reach the DB service. Step three: Check if the service exists and has endpoints backing it. Endpoints list is empty. The service exists but no pods are ready behind it. That's my root cause. This exact order works every time. Describe, logs with previous flag, then check dependencies." <div class="reply"><h2>DEBUG</h2><p>Here's my full CrashLoopBackOff checklist:
+
+1. kubectl describe pod &lt;name&gt; — look at Last State, Exit Code, and Events section
+2. kubectl logs &lt;name&gt; --previous — see what the crashed container actually logged before dying
+3. If exit code is 0 or 1: app-level issue (check logs). If 137: OOMKilled (check memory limits). If 143: SIGTERM (graceful shutdown, check probes).
+4. kubectl get endpoints &lt;service-name&gt; — verify dependencies have ready pods backing them
+5. Check your liveness/readiness probes — aggressive probes kill healthy pods during slow startup
+6. For image issues: describe will show ImagePullBackOff or ErrImagePull in events
+
+The --previous flag is the secret weapon most beginners miss. Without it you're looking at logs from the current restart attempt, not the crash that caused the loop. Save this and walk through it next time a pod won't stabilize.</p></div> @k8s.simplified
+    <div class="reply"><h2>DEBUG</h2><p>Here's my full CrashLoopBackOff checklist:
+
+1. kubectl describe pod &lt;name&gt; — look at Last State, Exit Code, and Events section
+2. kubectl logs &lt;name&gt; --previous — see what the crashed container actually logged before dying
+3. If exit code is 0 or 1: app-level issue (check logs). If 137: OOMKilled (check memory limits). If 143: SIGTERM (graceful shutdown, check probes).
+4. kubectl get endpoints &lt;service-name&gt; — verify dependencies have ready pods backing them
+5. Check your liveness/readiness probes — aggressive probes kill healthy pods during slow startup
+6. For image issues: describe will show ImagePullBackOff or ErrImagePull in events
+
+The --previous flag is the secret weapon most beginners miss. Without it you're looking at logs from the current restart attempt, not the crash that caused the loop. Save this and walk through it next time a pod won't stabilize.</p></div> is a pre-built HTML fragment (one .reply block per
+    trigger_replies entry), not plain text -- escaping happens at the call
+    site before assembly, not here.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">war_story</div>
+    <h1>My pod's been restarting for 3 minutes. Let me show you how I actually debug CrashLoopBackOff.</h1>
+    <div class="caption">I used to panic every time I saw CrashLoopBackOff.
+
+Now I follow the same 3-step order every single time: describe for exit codes, logs --previous for the crash reason, then check if dependencies are actually ready.
+
+The --previous flag changed everything for me — most beginners don't know crashed containers need that flag to see their logs.
+
+Save this for the next time your pod won't start. What's your go-to first command when debugging? Drop 'DEBUG' below and I'll send you my full CrashLoopBackOff checklist.
+
+—
+@k8s.simplified · Real K8s for DevOps beginners
+
+"My pod's stuck in CrashLoopBackOff. Here's my exact debugging order. Step one: describe the pod. I'm looking for the Last State and Exit Code. Exit code 1 with reason Error. That's an application crash, not a config issue. Step two: Check the logs. Use --previous flag to see logs from the crashed container. There it is. Connection refused to the database. My app can't reach the DB service. Step three: Check if the service exists and has endpoints backing it. Endpoints list is empty. The service exists but no pods are ready behind it. That's my root cause. This exact order works every time. Describe, logs with previous flag, then check dependencies."</div>
+    <div class="reply"><h2>DEBUG</h2><p>Here's my full CrashLoopBackOff checklist:
+
+1. kubectl describe pod &lt;name&gt; — look at Last State, Exit Code, and Events section
+2. kubectl logs &lt;name&gt; --previous — see what the crashed container actually logged before dying
+3. If exit code is 0 or 1: app-level issue (check logs). If 137: OOMKilled (check memory limits). If 143: SIGTERM (graceful shutdown, check probes).
+4. kubectl get endpoints &lt;service-name&gt; — verify dependencies have ready pods backing them
+5. Check your liveness/readiness probes — aggressive probes kill healthy pods during slow startup
+6. For image issues: describe will show ImagePullBackOff or ErrImagePull in events
+
+The --previous flag is the secret weapon most beginners miss. Without it you're looking at logs from the current restart attempt, not the crash that caused the loop. Save this and walk through it next time a pod won't stabilize.</p></div>
+    <div class="handle">@k8s.simplified</div>
+  </div>
+</body>
+</html>
