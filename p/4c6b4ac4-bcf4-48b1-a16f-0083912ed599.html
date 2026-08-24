@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>You don't need to be a Go expert to contribute to Kubernetes — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .reply p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin: 0;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">career</div>
+    <h1>You don't need to be a Go expert to contribute to Kubernetes</h1>
+    <div class="caption">I got my first K8s job with 12 doc PRs, not code.
+
+You don't need to be a Go expert. CNCF projects need help with docs, issue triage, and broken examples way more than complex code contributions. Start with 'good first issue' labels on Prometheus, Helm, or Cilium.
+
+Consistent small PRs beat one big code drop every time.
+
+Drop 'CONTRIBUTE' below and I'll send you my 5-project starter list with exact issue filters to use.
+
+—
+@k8s.simplified · K8s careers, explained like you're human
+
+"You don't need to be a Go expert to contribute to Kubernetes. Here's what actually works for your career. Most people think they need massive code PRs. Wrong. The maintainers need help with docs and issue triage way more. Start here: Pick a CNCF project you actually use. Prometheus, Helm, Cilium. Read their CONTRIBUTING.md file. Look for 'good first issue' or 'help wanted' labels. Most are doc fixes, typos, broken links. Low risk, high impact. Triage is gold. Reproduce bugs, add steps, confirm versions. Maintainers love this. It shows you understand production environments. Your first PR might be fixing a kubectl example in the docs. That's fine. You're now a contributor to a CNCF project. Put it on your resume. Link your GitHub. Interviewers care way more about consistent small contributions than one-off code drops. I got my first K8s job partly because I had 12 doc PRs merged into Helm. Start small, stay consistent."</div>
+    <div class="reply"><h2>CONTRIBUTE</h2><p>Here are 5 CNCF projects with beginner-friendly contribution paths:
+
+1. Helm (github.com/helm/helm) — Filter: label:'good first issue' + label:'documentation'. Lots of chart example fixes and CLI help text improvements.
+
+2. Prometheus (github.com/prometheus/prometheus) — Look for 'help wanted' in /docs folder. Config file examples and query clarifications are常被 needed.
+
+3. Cilium (github.com/cilium/cilium) — 'good-first-issue' label. Networking docs often need beginner-friendly rewrites since the maintainers are deep experts.
+
+4. K9s (github.com/derailed/k9s) — Smaller project, very responsive maintainer. README improvements and command docs are always welcome.
+
+5. Kubernetes itself (github.com/kubernetes/website) — The kubernetes/website repo is separate and way less intimidating. Start here with kubectl reference fixes or tutorial typos.
+
+Pro tip: Comment on the issue before starting work. Say 'I'd like to take this' and ask if it's still open. Saves you from duplicate effort. Once you get 2-3 PRs merged, you'll have real GitHub activity to show in interviews.</p></div>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
