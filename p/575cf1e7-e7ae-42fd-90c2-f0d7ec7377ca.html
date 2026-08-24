@@ -104,46 +104,15 @@
   <!--
     Content is templated in by
     automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
-    the {{PLACEHOLDER}} string-replace pattern from renderSlides.ts.
-    Placeholders: Your K8s portfolio project looks like every other beginner's — here's how I'd actually build one that gets you hired. career Most K8s portfolio projects look identical — and that's why they don't work.
-
-A real portfolio shows CI/CD, monitoring, and most importantly: a failure you debugged. That's what separates you from the 100 other nginx deployments a hiring manager saw this week.
-
-One good project with depth beats five shallow ones.
-
-What's in your K8s portfolio? Drop 'SERVICES' below if you're still stuck on hello-world deploys.
-
-—
-@k8s.simplified · K8s for DevOps beginners who want the real story
-
-"I've reviewed hundreds of K8s portfolios. 90% are the same nginx deployment with a service. Here's what actually stands out. Pick a real app with a database. A TODO app with Postgres, a URL shortener with Redis. Something that has state and breaks in interesting ways. Add CI/CD. GitHub Actions that builds your image, scans it with Trivy, and deploys to your cluster. Show you understand the pipeline, not just kubectl apply. Add observability. Prometheus for metrics, Grafana dashboard. Bonus points if you set up an alert for pod restarts or high memory. Now here's the secret: document a real failure. Show the CrashLoopBackOff you debugged, the memory leak you found with kubectl top, the PVC that didn't mount. This shows judgment. Anyone can copy working YAML. Showing how you debug when things break? That's what hiring managers actually want to see. Put it on GitHub with a detailed README. Architecture diagram, failure scenarios, lessons learned. Make it impossible to ignore." <div class="reply"><h2>SERVICES</h2><p>Hey! Thanks for dropping SERVICES 🙌 Here's the full breakdown of what actually makes a K8s portfolio project stand out, since 90% of what I see is the same nginx-deployment-plus-LoadBalancer-service and nothing else:
-
-1. Pick a real stateful app, not a static site. A TODO app backed by Postgres, or a URL shortener backed by Redis — something with a database, so you have to deal with StatefulSets or PVCs, secrets management, and connection pooling under load. Static apps never break in interesting ways, so they never teach you anything a hiring manager cares about.
-
-2. Real CI/CD, not just kubectl apply. Set up GitHub Actions to build your image on every push, scan it with Trivy for CVEs, push to a registry, then auto-deploy to your cluster (Helm or Kustomize, not raw YAML). This shows you understand the full software delivery pipeline, not just the deploy step.
-
-3. Observability that actually alerts. Prometheus scraping your app + node metrics, a Grafana dashboard, and at least one real alert rule — pod restart count &gt; 0 over 5 minutes, or memory usage &gt; 80%. Bonus if you wire it to a webhook (even a dummy Slack channel).
-
-4. The part everyone skips: a documented war story. Deliberately break something — force a CrashLoopBackOff with a bad liveness probe, cause an OOMKill by under-provisioning memory limits, or misconfigure a PVC's storage class so it won't bind. Then write up exactly how you diagnosed it: what kubectl describe/kubectl logs/kubectl top showed, what your hypothesis was, and how you fixed it. This is the single highest-signal thing in the whole project — anyone can copy working YAML off a tutorial, but showing your debugging process proves you can operate this in production when it's 2am and something's actually on fire.
-
-5. README that sells it. Architecture diagram (even a simple boxes-and-arrows one), the failure scenarios from #4 with root cause and fix, and a "lessons learned" section. Make it skimmable — most reviewers spend under 2 minutes on a portfolio repo.
-
-One project built this way beats five shallow ones. Happy to answer follow-ups if you get stuck on any piece of this!</p></div> @k8s.simplified
-    <div class="reply"><h2>SERVICES</h2><p>Hey! Thanks for dropping SERVICES 🙌 Here's the full breakdown of what actually makes a K8s portfolio project stand out, since 90% of what I see is the same nginx-deployment-plus-LoadBalancer-service and nothing else:
-
-1. Pick a real stateful app, not a static site. A TODO app backed by Postgres, or a URL shortener backed by Redis — something with a database, so you have to deal with StatefulSets or PVCs, secrets management, and connection pooling under load. Static apps never break in interesting ways, so they never teach you anything a hiring manager cares about.
-
-2. Real CI/CD, not just kubectl apply. Set up GitHub Actions to build your image on every push, scan it with Trivy for CVEs, push to a registry, then auto-deploy to your cluster (Helm or Kustomize, not raw YAML). This shows you understand the full software delivery pipeline, not just the deploy step.
-
-3. Observability that actually alerts. Prometheus scraping your app + node metrics, a Grafana dashboard, and at least one real alert rule — pod restart count &gt; 0 over 5 minutes, or memory usage &gt; 80%. Bonus if you wire it to a webhook (even a dummy Slack channel).
-
-4. The part everyone skips: a documented war story. Deliberately break something — force a CrashLoopBackOff with a bad liveness probe, cause an OOMKill by under-provisioning memory limits, or misconfigure a PVC's storage class so it won't bind. Then write up exactly how you diagnosed it: what kubectl describe/kubectl logs/kubectl top showed, what your hypothesis was, and how you fixed it. This is the single highest-signal thing in the whole project — anyone can copy working YAML off a tutorial, but showing your debugging process proves you can operate this in production when it's 2am and something's actually on fire.
-
-5. README that sells it. Architecture diagram (even a simple boxes-and-arrows one), the failure scenarios from #4 with root cause and fix, and a "lessons learned" section. Make it skimmable — most reviewers spend under 2 minutes on a portfolio repo.
-
-One project built this way beats five shallow ones. Happy to answer follow-ups if you get stuck on any piece of this!</p></div> is a pre-built HTML fragment (one .reply block per
-    trigger_replies entry), not plain text -- escaping happens at the call
-    site before assembly, not here.
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
   -->
   <div class="page">
     <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
