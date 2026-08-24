@@ -104,40 +104,15 @@
   <!--
     Content is templated in by
     automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
-    the {{PLACEHOLDER}} string-replace pattern from renderSlides.ts.
-    Placeholders: You don't need a Service Mesh. Until you do. concept A Service Mesh is a sidecar container that sits next to every pod and handles network stuff your code shouldn't care about.
-
-Istio and Linkerd inject proxies that do retries, mTLS, circuit breaking, and traffic shaping — so your Java, Go, and Python services don't need to implement it themselves. At scale, it's a lifesaver. Before 10 services, it's overkill.
-
-Takeaway: Service Mesh = network features as infrastructure, not application code.
-
-How many microservices are you running? Drop your count below 👇
-
-—
-@k8s.simplified · Kubernetes for DevOps beginners <div class="reply"><h2>AMBIENT MODE</h2><p>Great question, let's go deep on it. Istio's ambient mesh (GA since 1.24) fundamentally changes the data plane architecture compared to classic sidecar mode:
-
-Sidecar mode (the default until recently): every pod gets an Envoy proxy injected as a second container. That proxy intercepts all inbound/outbound traffic via iptables rules. You get full L4+L7 capability per pod (mTLS, retries, circuit breaking, traffic shaping) but you pay for it with 2x container count, a memory/CPU tax per pod (Envoy isn't free, typically 40-100MB+ per sidecar), slower pod startup (sidecar has to be ready before traffic flows), and a genuinely painful upgrade story (rolling sidecar upgrades mean restarting every workload pod).
-
-Ambient mode: splits the mesh into two layers instead of one proxy-per-pod. A shared ztunnel (one per node, not per pod) handles L4 — mTLS via a custom protocol called HBONE (HTTP-based overlay network encapsulation), plus basic telemetry and authorization — for every pod on that node. There's no sidecar injection at all, so pod startup is faster and resource overhead per-pod drops dramatically since you're not running N Envoys for N pods, just one ztunnel per node.
-
-For L7 features (HTTP-aware retries, circuit breaking, fine-grained traffic splitting, canary routing) you opt in per-namespace by deploying a waypoint proxy — this is still Envoy, but shared across a namespace instead of injected per-pod, and traffic only routes through it if a workload actually needs L7 policy. So you pay the L7 tax only where you use L7 features, instead of everywhere by default.
-
-The real tradeoff: ambient is newer, so its L7 feature parity and battle-testing under complex traffic-shaping scenarios lags sidecar mode — if you're doing heavy canary/A-B/mirroring work today, sidecar mode is still the more proven path. And routing through a waypoint adds an extra network hop versus a co-located sidecar, though in practice ztunnel's HBONE path is fast enough that this rarely shows up as a real bottleneck for L4-only traffic.
-
-When to pick which: if you mainly want mTLS + basic observability across a dense cluster and want to minimize resource overhead, ambient is the newer, leaner choice. If you're leaning hard on L7 traffic management (weighted routing, fault injection, detailed retry budgets) across most of your services, sidecar mode is still the safer bet today. You can also run them side by side during migration — ambient doesn't require an all-or-nothing cutover.</p></div> @k8s.simplified
-    <div class="reply"><h2>AMBIENT MODE</h2><p>Great question, let's go deep on it. Istio's ambient mesh (GA since 1.24) fundamentally changes the data plane architecture compared to classic sidecar mode:
-
-Sidecar mode (the default until recently): every pod gets an Envoy proxy injected as a second container. That proxy intercepts all inbound/outbound traffic via iptables rules. You get full L4+L7 capability per pod (mTLS, retries, circuit breaking, traffic shaping) but you pay for it with 2x container count, a memory/CPU tax per pod (Envoy isn't free, typically 40-100MB+ per sidecar), slower pod startup (sidecar has to be ready before traffic flows), and a genuinely painful upgrade story (rolling sidecar upgrades mean restarting every workload pod).
-
-Ambient mode: splits the mesh into two layers instead of one proxy-per-pod. A shared ztunnel (one per node, not per pod) handles L4 — mTLS via a custom protocol called HBONE (HTTP-based overlay network encapsulation), plus basic telemetry and authorization — for every pod on that node. There's no sidecar injection at all, so pod startup is faster and resource overhead per-pod drops dramatically since you're not running N Envoys for N pods, just one ztunnel per node.
-
-For L7 features (HTTP-aware retries, circuit breaking, fine-grained traffic splitting, canary routing) you opt in per-namespace by deploying a waypoint proxy — this is still Envoy, but shared across a namespace instead of injected per-pod, and traffic only routes through it if a workload actually needs L7 policy. So you pay the L7 tax only where you use L7 features, instead of everywhere by default.
-
-The real tradeoff: ambient is newer, so its L7 feature parity and battle-testing under complex traffic-shaping scenarios lags sidecar mode — if you're doing heavy canary/A-B/mirroring work today, sidecar mode is still the more proven path. And routing through a waypoint adds an extra network hop versus a co-located sidecar, though in practice ztunnel's HBONE path is fast enough that this rarely shows up as a real bottleneck for L4-only traffic.
-
-When to pick which: if you mainly want mTLS + basic observability across a dense cluster and want to minimize resource overhead, ambient is the newer, leaner choice. If you're leaning hard on L7 traffic management (weighted routing, fault injection, detailed retry budgets) across most of your services, sidecar mode is still the safer bet today. You can also run them side by side during migration — ambient doesn't require an all-or-nothing cutover.</p></div> is a pre-built HTML fragment (one .reply block per
-    trigger_replies entry), not plain text -- escaping happens at the call
-    site before assembly, not here.
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
   -->
   <div class="page">
     <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
