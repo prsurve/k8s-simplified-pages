@@ -7,6 +7,9 @@
 <meta name="robots" content="noindex, nofollow" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script>
+<!-- End Cloudflare Web Analytics -->
 <style>
   /*
    * Public, unlisted per-post article page -- see
@@ -93,10 +96,41 @@
     white-space: pre-line;
     margin: 0;
   }
-  .handle {
+  .handle-wrap {
+    position: relative;
     margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 15px;
     color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
   }
 </style>
 </head>
@@ -156,7 +190,30 @@ Same format as CKA: 2 hours, fully hands-on, real clusters, no multiple choice.
 Who it's for: application developers who ship to Kubernetes but don't own cluster infrastructure — the "how do I get my app running and keep it running" side of things, not the "how do I keep the cluster itself alive" side (that's CKA).
 
 How to prep: get comfortable generating YAML fast from 'kubectl create --dry-run=client -o yaml' rather than writing it from scratch — CKAD is even more time-pressured than CKA relative to task count. Practice multi-container pod patterns specifically (they show up constantly), understand exactly how probes fail and what that looks like in 'kubectl describe pod', and drill ConfigMap/Secret mounting both ways (env and volume) since exam questions often specify one or the other deliberately.</p></div>
-    <div class="handle">@k8s.simplified</div>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
   </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
 </body>
 </html>
