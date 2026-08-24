@@ -114,8 +114,60 @@ Pick the cert that matches what you'll actually do Monday morning — not what s
 Which one are you prepping for? Comment CKA, CKAD, or CKS below.
 
 —
-@k8s.simplified · Kubernetes explained like you're a smart intern, not a docs page.  @k8s.simplified
-     is a pre-built HTML fragment (one .reply block per
+@k8s.simplified · Kubernetes explained like you're a smart intern, not a docs page. <div class="reply"><h2>CKA</h2><p>CKA (Certified Kubernetes Administrator) is the cluster-operator cert. It tests whether you can stand up, configure, upgrade, and fix a cluster from the infrastructure side — not deploy apps onto one someone else built.
+
+What's actually tested: installing/bootstrapping clusters with kubeadm, node troubleshooting (kubelet down, cert expiry, join failures), etcd backup and restore (this trips up a lot of people — practice it until it's muscle memory), RBAC configuration, networking fundamentals (Services, CNI basics, DNS), storage (PV/PVC/StorageClass), and general cluster troubleshooting under time pressure.
+
+It's a 2-hour, fully hands-on exam — real terminals, real broken clusters, no multiple choice. ~15-20 performance tasks.
+
+Who it's for: platform engineers, SREs, DevOps engineers who own the cluster itself — the people who get paged when a node goes NotReady or etcd won't quorum.
+
+How to prep: get fast at imperative kubectl (create/expose/run with flags, not YAML from scratch for every little thing — you don't have time), deliberately break a local cluster (kubeadm reset, corrupt a cert, kill etcd) and practice fixing it, memorize the etcd backup/restore commands cold, and run through killer.sh's CKA simulator at least twice before the real exam — the time pressure is the actual hard part, not the content.</p></div>
+<div class="reply"><h2>CKS</h2><p>CKS (Certified Kubernetes Security Specialist) is the security cert — and it has a hard prerequisite: you must already hold an active CKA before you're even allowed to sit it. It builds directly on cluster-admin knowledge, then adds a security lens on top.
+
+What's actually tested: cluster hardening (CIS benchmarks, disabling insecure defaults, API server flags), minimizing attack surface for workloads (Pod Security Standards/admission, seccomp, AppArmor, dropping capabilities), supply chain security (image scanning, verifying image provenance, minimizing base images), runtime security and monitoring (Falco rules, audit logging), and network security (NetworkPolicies, mTLS basics, RBAC review/tightening).
+
+Same hands-on format as CKA/CKAD, arguably the most operationally deep of the three — you're expected to already have the CKA-level cluster fluency and layer security response on top of it under time pressure.
+
+Who it's for: security engineers embedded in platform teams, or platform/SRE folks specializing into the security side — people responsible for "is this cluster actually safe to run in production," not just "does it work."
+
+How to prep: get real CKA-level fluency first (it's a hard prerequisite for a reason — you won't have time to relearn basic kubectl during the exam). Then specifically drill: writing NetworkPolicies from scratch, configuring Pod Security Standards/admission at the namespace level, using an image scanner (Trivy is common) and reading its output fast, writing basic Falco rules, and auditing/tightening RBAC (finding and removing overly broad ClusterRoleBindings). killer.sh has a CKS simulator too — use it, the exam's security-specific tooling (Falco, AppArmor profiles) is unfamiliar to most people going in.</p></div>
+<div class="reply"><h2>CKAD</h2><p>CKAD (Certified Kubernetes Application Developer) is the app-deployer cert. It assumes someone else manages the cluster — you're testing whether you can design, deploy, configure, and troubleshoot workloads running on it.
+
+What's actually tested: Pod/Deployment/Job/CronJob design, multi-container patterns (sidecar, init containers, ambassador), ConfigMaps and Secrets (as env vars and as mounted volumes), liveness/readiness/startup probes, resource requests/limits, Services and basic networking from the app side, and troubleshooting a broken Deployment (wrong image, bad probe config, missing ConfigMap — the exam loves these).
+
+Same format as CKA: 2 hours, fully hands-on, real clusters, no multiple choice.
+
+Who it's for: application developers who ship to Kubernetes but don't own cluster infrastructure — the "how do I get my app running and keep it running" side of things, not the "how do I keep the cluster itself alive" side (that's CKA).
+
+How to prep: get comfortable generating YAML fast from 'kubectl create --dry-run=client -o yaml' rather than writing it from scratch — CKAD is even more time-pressured than CKA relative to task count. Practice multi-container pod patterns specifically (they show up constantly), understand exactly how probes fail and what that looks like in 'kubectl describe pod', and drill ConfigMap/Secret mounting both ways (env and volume) since exam questions often specify one or the other deliberately.</p></div> @k8s.simplified
+    <div class="reply"><h2>CKA</h2><p>CKA (Certified Kubernetes Administrator) is the cluster-operator cert. It tests whether you can stand up, configure, upgrade, and fix a cluster from the infrastructure side — not deploy apps onto one someone else built.
+
+What's actually tested: installing/bootstrapping clusters with kubeadm, node troubleshooting (kubelet down, cert expiry, join failures), etcd backup and restore (this trips up a lot of people — practice it until it's muscle memory), RBAC configuration, networking fundamentals (Services, CNI basics, DNS), storage (PV/PVC/StorageClass), and general cluster troubleshooting under time pressure.
+
+It's a 2-hour, fully hands-on exam — real terminals, real broken clusters, no multiple choice. ~15-20 performance tasks.
+
+Who it's for: platform engineers, SREs, DevOps engineers who own the cluster itself — the people who get paged when a node goes NotReady or etcd won't quorum.
+
+How to prep: get fast at imperative kubectl (create/expose/run with flags, not YAML from scratch for every little thing — you don't have time), deliberately break a local cluster (kubeadm reset, corrupt a cert, kill etcd) and practice fixing it, memorize the etcd backup/restore commands cold, and run through killer.sh's CKA simulator at least twice before the real exam — the time pressure is the actual hard part, not the content.</p></div>
+<div class="reply"><h2>CKS</h2><p>CKS (Certified Kubernetes Security Specialist) is the security cert — and it has a hard prerequisite: you must already hold an active CKA before you're even allowed to sit it. It builds directly on cluster-admin knowledge, then adds a security lens on top.
+
+What's actually tested: cluster hardening (CIS benchmarks, disabling insecure defaults, API server flags), minimizing attack surface for workloads (Pod Security Standards/admission, seccomp, AppArmor, dropping capabilities), supply chain security (image scanning, verifying image provenance, minimizing base images), runtime security and monitoring (Falco rules, audit logging), and network security (NetworkPolicies, mTLS basics, RBAC review/tightening).
+
+Same hands-on format as CKA/CKAD, arguably the most operationally deep of the three — you're expected to already have the CKA-level cluster fluency and layer security response on top of it under time pressure.
+
+Who it's for: security engineers embedded in platform teams, or platform/SRE folks specializing into the security side — people responsible for "is this cluster actually safe to run in production," not just "does it work."
+
+How to prep: get real CKA-level fluency first (it's a hard prerequisite for a reason — you won't have time to relearn basic kubectl during the exam). Then specifically drill: writing NetworkPolicies from scratch, configuring Pod Security Standards/admission at the namespace level, using an image scanner (Trivy is common) and reading its output fast, writing basic Falco rules, and auditing/tightening RBAC (finding and removing overly broad ClusterRoleBindings). killer.sh has a CKS simulator too — use it, the exam's security-specific tooling (Falco, AppArmor profiles) is unfamiliar to most people going in.</p></div>
+<div class="reply"><h2>CKAD</h2><p>CKAD (Certified Kubernetes Application Developer) is the app-deployer cert. It assumes someone else manages the cluster — you're testing whether you can design, deploy, configure, and troubleshoot workloads running on it.
+
+What's actually tested: Pod/Deployment/Job/CronJob design, multi-container patterns (sidecar, init containers, ambassador), ConfigMaps and Secrets (as env vars and as mounted volumes), liveness/readiness/startup probes, resource requests/limits, Services and basic networking from the app side, and troubleshooting a broken Deployment (wrong image, bad probe config, missing ConfigMap — the exam loves these).
+
+Same format as CKA: 2 hours, fully hands-on, real clusters, no multiple choice.
+
+Who it's for: application developers who ship to Kubernetes but don't own cluster infrastructure — the "how do I get my app running and keep it running" side of things, not the "how do I keep the cluster itself alive" side (that's CKA).
+
+How to prep: get comfortable generating YAML fast from 'kubectl create --dry-run=client -o yaml' rather than writing it from scratch — CKAD is even more time-pressured than CKA relative to task count. Practice multi-container pod patterns specifically (they show up constantly), understand exactly how probes fail and what that looks like in 'kubectl describe pod', and drill ConfigMap/Secret mounting both ways (env and volume) since exam questions often specify one or the other deliberately.</p></div> is a pre-built HTML fragment (one .reply block per
     trigger_replies entry), not plain text -- escaping happens at the call
     site before assembly, not here.
   -->
@@ -134,7 +186,33 @@ Which one are you prepping for? Comment CKA, CKAD, or CKS below.
 
 —
 @k8s.simplified · Kubernetes explained like you're a smart intern, not a docs page.</div>
-    
+    <div class="reply"><h2>CKA</h2><p>CKA (Certified Kubernetes Administrator) is the cluster-operator cert. It tests whether you can stand up, configure, upgrade, and fix a cluster from the infrastructure side — not deploy apps onto one someone else built.
+
+What's actually tested: installing/bootstrapping clusters with kubeadm, node troubleshooting (kubelet down, cert expiry, join failures), etcd backup and restore (this trips up a lot of people — practice it until it's muscle memory), RBAC configuration, networking fundamentals (Services, CNI basics, DNS), storage (PV/PVC/StorageClass), and general cluster troubleshooting under time pressure.
+
+It's a 2-hour, fully hands-on exam — real terminals, real broken clusters, no multiple choice. ~15-20 performance tasks.
+
+Who it's for: platform engineers, SREs, DevOps engineers who own the cluster itself — the people who get paged when a node goes NotReady or etcd won't quorum.
+
+How to prep: get fast at imperative kubectl (create/expose/run with flags, not YAML from scratch for every little thing — you don't have time), deliberately break a local cluster (kubeadm reset, corrupt a cert, kill etcd) and practice fixing it, memorize the etcd backup/restore commands cold, and run through killer.sh's CKA simulator at least twice before the real exam — the time pressure is the actual hard part, not the content.</p></div>
+<div class="reply"><h2>CKS</h2><p>CKS (Certified Kubernetes Security Specialist) is the security cert — and it has a hard prerequisite: you must already hold an active CKA before you're even allowed to sit it. It builds directly on cluster-admin knowledge, then adds a security lens on top.
+
+What's actually tested: cluster hardening (CIS benchmarks, disabling insecure defaults, API server flags), minimizing attack surface for workloads (Pod Security Standards/admission, seccomp, AppArmor, dropping capabilities), supply chain security (image scanning, verifying image provenance, minimizing base images), runtime security and monitoring (Falco rules, audit logging), and network security (NetworkPolicies, mTLS basics, RBAC review/tightening).
+
+Same hands-on format as CKA/CKAD, arguably the most operationally deep of the three — you're expected to already have the CKA-level cluster fluency and layer security response on top of it under time pressure.
+
+Who it's for: security engineers embedded in platform teams, or platform/SRE folks specializing into the security side — people responsible for "is this cluster actually safe to run in production," not just "does it work."
+
+How to prep: get real CKA-level fluency first (it's a hard prerequisite for a reason — you won't have time to relearn basic kubectl during the exam). Then specifically drill: writing NetworkPolicies from scratch, configuring Pod Security Standards/admission at the namespace level, using an image scanner (Trivy is common) and reading its output fast, writing basic Falco rules, and auditing/tightening RBAC (finding and removing overly broad ClusterRoleBindings). killer.sh has a CKS simulator too — use it, the exam's security-specific tooling (Falco, AppArmor profiles) is unfamiliar to most people going in.</p></div>
+<div class="reply"><h2>CKAD</h2><p>CKAD (Certified Kubernetes Application Developer) is the app-deployer cert. It assumes someone else manages the cluster — you're testing whether you can design, deploy, configure, and troubleshoot workloads running on it.
+
+What's actually tested: Pod/Deployment/Job/CronJob design, multi-container patterns (sidecar, init containers, ambassador), ConfigMaps and Secrets (as env vars and as mounted volumes), liveness/readiness/startup probes, resource requests/limits, Services and basic networking from the app side, and troubleshooting a broken Deployment (wrong image, bad probe config, missing ConfigMap — the exam loves these).
+
+Same format as CKA: 2 hours, fully hands-on, real clusters, no multiple choice.
+
+Who it's for: application developers who ship to Kubernetes but don't own cluster infrastructure — the "how do I get my app running and keep it running" side of things, not the "how do I keep the cluster itself alive" side (that's CKA).
+
+How to prep: get comfortable generating YAML fast from 'kubectl create --dry-run=client -o yaml' rather than writing it from scratch — CKAD is even more time-pressured than CKA relative to task count. Practice multi-container pod patterns specifically (they show up constantly), understand exactly how probes fail and what that looks like in 'kubectl describe pod', and drill ConfigMap/Secret mounting both ways (env and volume) since exam questions often specify one or the other deliberately.</p></div>
     <div class="handle">@k8s.simplified</div>
   </div>
 </body>
