@@ -1,0 +1,11 @@
+[allowlist]
+  description = "Global Allowlist"
+
+  # Cloudflare Web Analytics beacon site-token, baked into every page's
+  # <head> by automation/render-templates/article.html. This is a public
+  # client-side analytics tag (comparable to a GA measurement ID) that
+  # every visitor's browser already receives in plain HTML -- it grants no
+  # read/write access to anything and is not a credential.
+  regexes = [
+    '''data-cf-beacon='\{"token": "66af49ec83cf460a8d25e775241ca0b6"\}\'''',
+  ]
