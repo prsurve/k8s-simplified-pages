@@ -122,6 +122,12 @@
     display: flex;
     flex-direction: column;
   }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
   .handle-menu a {
     padding: 10px 14px;
     font-size: 15px;
