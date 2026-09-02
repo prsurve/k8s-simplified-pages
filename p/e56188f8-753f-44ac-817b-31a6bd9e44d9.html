@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>I upgrade Kubernetes clusters for a living. Here's what I'm testing first in 1.37. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .reply p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin: 0;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>I upgrade Kubernetes clusters for a living. Here's what I'm testing first in 1.37.</h1>
+    <div class="caption">I've upgraded 30+ prod K8s clusters and version 1.37 has three things I'm testing first.
+
+kubectl events output changed (will break monitoring scripts), CronJob APIs migrated to v1 (deprecation warnings incoming), and VolumeAttributesClass went stable (PVC resize behavior shifted). The Pod sleep action feature is genuinely useful for debugging, but those three checks have saved me from 2am pages.
+
+Always test event parsing, CronJob manifests, and PVC operations before upgrading production.
+
+Comment CHECKLIST for my complete pre-upgrade runbook with commands. What's your upgrade horror story?
+
+—
+@k8s.simplified · Kubernetes explained like you're a smart intern, not a YAML parser
+
+"I've upgraded 30+ production K8s clusters in the last two years. Version 1.37 just released and here's my upgrade checklist. First thing I test: kubectl events. They overhauled the output format. If your monitoring scripts parse kubectl events, they might break. War story: 1.34 broke our CI pipeline because we grep'd event output. Took 3 hours to find. Now I test this before every upgrade. Second: check your CronJobs. Job success policies are now stable, which means the API changed from v1beta1 to v1. Your old manifests still work but deprecation warnings will flood logs. Third test: PVC resize operations. VolumeAttributesClass is stable now. If you resize volumes mid-upgrade, the behavior changed slightly in how it handles in-flight operations. The one feature I'm actually excited about: Pod sleep actions in beta. Finally, a clean way to debug init container failures without modifying the image. Real talk: most upgrades are boring. But these three checks have saved me from 2am pages. Test events, check CronJob APIs, validate PVC operations. If you're upgrading soon or studying for CKA, these are the changes that'll bite you. Comment CHECKLIST for my full pre-upgrade runbook."</div>
+    <div class="reply"><h2>CHECKLIST</h2><p>Complete K8s 1.37 pre-upgrade runbook:
+
+**Before upgrade (test cluster):**
+1. Check kubectl events output format: Run 'kubectl events --output wide' and verify any scripts parsing this output still work. Compare with 1.36 output.
+2. Audit CronJob manifests: 'kubectl get cronjobs --all-namespaces -o yaml | grep apiVersion' — flag any still using batch/v1beta1.
+3. Test PVC resize: If you use dynamic volume expansion, create test PVC, resize it, verify mount behavior matches 1.36.
+4. API deprecation scan: 'kubectl get --raw /apis' and check for any v1beta1 APIs your workloads use. Focus on batch, storage, autoscaling.
+5. Review release notes for your CNI plugin (Calico, Cilium, etc.) — some require updates before K8s 1.37.
+
+**Commands to run:**
+- 'kubectl api-resources | grep v1beta' (should return minimal results)
+- 'kubectl get events --all-namespaces --output json | jq .items[0]' (check JSON structure if you parse events)
+- 'kubectl get pods --all-namespaces -o yaml | grep -i sleep' (find if any existing lifecycle hooks conflict with new sleep action)
+
+**Migration steps:**
+1. Upgrade test/dev cluster first, wait 48 hours, monitor for warnings in kube-apiserver logs.
+2. Update CronJob manifests to batch/v1 (even though v1beta1 still works, start migration now).
+3. If using VolumeAttributesClass (uncommon for beginners), test in staging with actual workload I/O patterns.
+4. Update monitoring: Prometheus queries, Grafana dashboards, alert rules that depend on kubectl output.
+5. Upgrade control plane first, then node pools in rolling fashion.
+
+**Rollback plan:**
+Control plane: snapshot etcd before upgrade. Nodes: keep 1.36 node pool running during canary, shift traffic back if issues.
+
+**Post-upgrade validation:**
+- All CronJobs triggered successfully
+- PVC resize operations complete without stuck volumes
+- No unexpected restarts in core workloads
+- Monitoring dashboards show accurate data
+
+For CKA exam: know the kubectl events syntax changes and Job success policy manifest structure. Exam environment might be on 1.37 soon.</p></div>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
