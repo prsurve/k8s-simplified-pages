@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>OpenCost just shipped something I've never seen before: real-time cost tracking for AI inference workloads in Kubernetes. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .reply p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin: 0;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>OpenCost just shipped something I've never seen before: real-time cost tracking for AI inference workloads in Kubernetes.</h1>
+    <div class="caption">OpenCost just shipped the first-ever Kubernetes-native inference cost tracking. Version 1.121.0.
+
+If you're running AI workloads on K8s, this changes how you track GPU spend. No more guessing which models cost what. No more splitting GPU bills evenly across teams. You get per-model, per-request, per-namespace dollar costs.
+
+I walked through the full install, showed you how to label your Pods, and queried the API live. This is the kind of proactive tooling that separates senior engineers from beginners.
+
+Subscribe for more Kubernetes deep dives. Drop COSTS below if you want my Grafana dashboard config for this.
+
+—
+@k8s.simplified · Kubernetes for DevOps engineers who want to stop guessing.
+
+"OpenCost just shipped something I've never seen before: real-time cost tracking for AI inference workloads in Kubernetes. Version 1.121.0 dropped last week, and it changes everything about how we track GPU costs. I'm going to show you why this matters, how it works under the hood, and walk you through installing it in your cluster. By the end, you'll have a real mental model for how inference cost tracking actually works. If you're running AI workloads on Kubernetes, or even just curious about cost observability, this is the video. Let's get into it. First, the problem. Traditional Kubernetes cost tools like Kubecost or even vanilla OpenCost track CPU and memory really well. But they treat GPUs as just another resource. That's fine for training workloads where a GPU runs at near 100% for hours. But inference is different. A model loads, runs for milliseconds, then idles. You're paying for the full GPU hour even if you only used 3 seconds of compute. Without inference-aware tracking, you have no idea which models are expensive, which endpoints are inefficient, or where to optimize. You're flying blind on the fastest-growing part of your cloud bill. OpenCost 1.121.0 fixes this. It tracks inference requests, token counts, model usage, and GPU time per request. Then it attributes actual dollar costs to each inference call. This is the first open-source tool that does this natively in Kubernetes. Not an external SaaS. Not a hacky script. Built into the CNCF sandbox project that 12,000+ companies already use. Before we install it, let's break down how it actually works. Because the architecture here is clever, and understanding it will make the config way easier. OpenCost already scrapes Prometheus metrics from your cluster. It knows CPU usage, memory, storage, network. For GPUs, it scrapes DCGM exporter metrics if you're on NVIDIA, or vendor equivalents. The new feature adds inference-aware metrics. It watches for specific labels and annotations on your inference Pods. Things like model name, endpoint, request count, token usage. Then it correlates those inference metrics with GPU utilization. So if a Pod running llama-3-8b used 200ms of GPU time for a request, OpenCost calculates the cost for that 200ms slice, not the full hour. It exposes this as a new API endpoint. You can query costs by model, by namespace, by endpoint, even by token tier if you're running multiple models. This is gold for chargeback and cost allocation. The key insight: OpenCost doesn't change how your inference workloads run. It just reads labels and metrics you should already be emitting. If you're not, we'll fix that in the walkthrough. Alright, let's install this. I'm assuming you have a running Kubernetes cluster with GPU nodes, Prometheus, and some inference workload. If you don't have Prometheus yet, pause here and install kube-prometheus-stack first. Step one: install OpenCost. We'll use Helm. Add the OpenCost repo, update it, then install the chart into the opencost namespace. Run helm repo add opencost, then helm repo update. Now install the chart. We'll create the namespace inline and pass a few custom values. That command disables the bundled Prometheus and points OpenCost to your existing one. Replace that URL with your actual Prometheus service endpoint. Check with kubectl get svc -n monitoring if you're not sure. Wait for the Pod to be ready. Run kubectl get pods -n opencost. You should see opencost running after 20-30 seconds. Step two: install DCGM exporter if you haven't already. This is the NVIDIA tool that exports GPU metrics to Prometheus. Without it, OpenCost can't see GPU usage. Add the NVIDIA Helm repo, update, then install dcgm-exporter into the gpu-operator namespace. Or wherever you run your GPU tooling. Verify it's scraping metrics. Check Prometheus targets at /targets. You should see dcgm-exporter endpoints in UP state. Step three: label your inference Pods. This is critical. OpenCost uses specific labels to identify which Pods are running inference workloads and which model they're serving. Add these labels to your Deployment or StatefulSet spec: opencost.io/inference equals true, and opencost.io/model equals your model name. Like llama-3-8b or whisper-large-v3. Here's an example Deployment snippet. Under metadata labels in the Pod template, add those two labels. Redeploy your workload after editing. If your inference service emits custom metrics, like request count or token usage, OpenCost will pick those up automatically. Just make sure they're scraped by Prometheus and labeled with the same Pod name. Step four: configure cloud pricing. OpenCost needs to know your GPU hourly cost. By default it uses AWS public pricing, but if you're on GCP, Azure, or have custom rates, set them in the Helm values. Create a values.yaml file. Under opencost, add a cloudProviderApiKey if you want real-time pricing, or manually set GPU hourly rates under customPricing. Upgrade your Helm release with those values. Run helm upgrade opencost opencost/opencost -n opencost -f values.yaml. This reconfigures OpenCost without downtime. Step five: query the inference cost API. OpenCost exposes a REST API on port 9003. We'll port-forward it locally and hit the new inference endpoint. Run kubectl port-forward to expose the service. Then in another terminal, curl the inference cost endpoint. You'll get a JSON response with cost breakdowns by model, namespace, and time window. Here's what mine looks like. Model llama-3-8b, 47 requests in the last hour, total cost 12 cents. You can filter by time range, namespace, or model with query params. Add ?window=7d for the last week, or &amp;namespace=prod to scope it down. This is the data you'd feed into a dashboard, a Slack bot, or your internal cost allocation tool. OpenCost just becomes the source of truth for inference spend. Now let's talk about what this unlocks. First, per-model cost tracking. You can see which models are burning budget and which are efficient. Maybe your whisper model costs 10x more per request than you thought. Second, chargeback. If you're a platform team serving multiple product teams, you can now bill them accurately for inference usage. No more splitting GPU costs evenly or guessing. Third, optimization targeting. You can identify high-cost, low-value endpoints. Maybe a staging environment is running inference 24/7 with no traffic. Shut it down, save hundreds a month. Fourth, capacity planning. If you know your per-request cost and request volume trends, you can forecast GPU spend and right-size your node pools before the bill surprises you. This is especially huge for startups and small teams. You don't need a dedicated FinOps person or an expensive SaaS tool. OpenCost is free, open-source, and runs in your cluster. A few gotchas before we wrap. One: if your inference workload doesn't emit request metrics, OpenCost can't track per-request costs. It'll fall back to hourly GPU splits, which is still better than nothing. Two: token-level tracking requires your app to expose token counts as Prometheus metrics. Most inference servers like vLLM or TGI do this by default, but check your setup. Three: GPU pricing data might be stale if you're using public cloud APIs. OpenCost caches prices for 24 hours. If you negotiate custom rates, set them manually in customPricing. Four: this feature is brand new. Expect rough edges. The OpenCost team is iterating fast, so check the GitHub releases and join their Slack if you hit issues. Alright, let's recap. OpenCost 1.121.0 adds inference cost tracking to Kubernetes. It correlates GPU usage with inference requests and attributes real dollar costs per model, per endpoint, per namespace. We installed OpenCost via Helm, set up DCGM exporter for GPU metrics, labeled our inference Pods, configured pricing, and queried the new API. That's the full workflow. The actionable takeaway: if you're running inference on Kubernetes, install OpenCost today and label your Pods. Even if you don't act on the data immediately, you'll have cost history when you need it. This is the kind of tooling that separates senior DevOps engineers from beginners. Not knowing your costs is a junior mistake. Tracking them proactively, even when no one's asking, is how you get promoted. If you found this useful, subscribe for more Kubernetes deep dives like this. Drop COSTS in the comments if you want my full Grafana dashboard config for visualizing this data. I'll pin it. I'm @k8s.simplified. I teach Kubernetes to DevOps engineers who want to stop guessing and start knowing. See you in the next one."</div>
+    <div class="reply"><h2>COSTS</h2><p>Here's my full Grafana dashboard config for OpenCost inference tracking. Create a new dashboard, add a JSON model panel, and paste this config. It queries the OpenCost API every 30s and shows per-model cost trends, request volume, and cost per 1k tokens. You'll need to replace the Prometheus datasource UID with yours (check your Grafana datasources settings). The key metrics are opencost_inference_cost_total (cumulative cost), opencost_inference_requests_total (request count), and opencost_inference_tokens_total (token usage). I also added a table view that ranks models by cost descending — super useful for spotting runaway spend. If you want to add alerts, set a threshold on the cost rate (rate(opencost_inference_cost_total[5m])) and fire a Slack webhook when it spikes. Let me know if you hit issues importing it, I can walk you through the datasource setup.</p></div>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
