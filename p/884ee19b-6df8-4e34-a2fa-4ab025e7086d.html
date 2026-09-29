@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Your cluster already has a bouncer and a guard dog. You just haven't met them yet. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .reply p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin: 0;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>Your cluster already has a bouncer and a guard dog. You just haven't met them yet.</h1>
+    <div class="caption">Your cluster has a bouncer and a guard dog. You just never met them.
+
+Meet Falkey (Falco) and Ky (Kyverno) — the two open source tools that actually keep your Kubernetes cluster safe. Kyverno is policy-as-code that blocks bad YAML at the gate before it's ever applied. Falco is runtime security that watches live and catches weird behavior after something's already running.
+
+Takeaway: prevention and detection are two different jobs. Run Kyverno to stop it before, run Falco to catch it after. Don't rely on just one.
+
+Comment 'GUARDS' and I'll send you the setup to get both running on a test cluster in under 10 minutes.
+
+—
+@k8s.simplified · kubernetes, explained like a human
+
+"Two mascots are about to change how you think about Kubernetes security. Say hi to Falkey and Ky. This is Falkey, the Falco falcon. Falco watches your containers live — every syscall, every process, every shell that spawns. This is Ky, the Kyverno Pyrenees. Pyrenees dogs guard livestock at the gate. Kyverno guards your cluster the same way — nothing bad gets in. One's a gatekeeper, one's a lookout. Ky stops bad YAML before it's ever applied. Falkey catches bad behavior after something's already running. Watch this. A privileged pod tries to sneak in — Ky blocks it right at the gate. Denied, never runs. But if a container starts spawning a shell it shouldn't, Falkey swoops in with an alert in real time. Here's the takeaway: Kyverno prevents. Falco detects. You need both, because prevention is never perfect and detection is never early enough alone. Comment GUARDS and I'll send you the exact setup to get both running on a test cluster in under ten minutes."</div>
+    <div class="reply"><h2>GUARDS</h2><p>Here's the fast setup for both. For Kyverno (the gatekeeper): install with helm repo add kyverno https://kyverno.github.io/kyverno/ then helm install kyverno kyverno/kyverno -n kyverno --create-namespace. Once it's running, apply a ClusterPolicy — start with the 'disallow-privileged-containers' policy from Kyverno's official policy library (kyverno.io/policies) so any pod trying to run privileged gets denied at admission, before it ever schedules. For Falco (the lookout): install with helm repo add falcosecurity https://falcosecurity.github.io/charts then helm install falco falcosecurity/falco -n falco --create-namespace. Falco ships with default rules that flag things like a shell being spawned inside a container or a write to a sensitive system directory — tail the alerts with kubectl logs -n falco -l app.kubernetes.io/name=falco -f. Run both side by side on a kind or minikube test cluster first: try applying a privileged pod (Kyverno should deny it), then exec into a running pod and spawn a shell (Falco should alert on it) — seeing both fire is the fastest way to understand the difference between prevention and detection.</p></div>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
