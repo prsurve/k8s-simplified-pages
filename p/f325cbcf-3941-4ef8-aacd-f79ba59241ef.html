@@ -89,12 +89,58 @@
     text-transform: uppercase;
     margin: 0 0 16px;
   }
-  .reply p {
+  .guide p {
     font-size: 17px;
     line-height: 1.7;
     color: #E6EDF3;
-    white-space: pre-line;
-    margin: 0;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
   }
   .handle-wrap {
     position: relative;
@@ -170,7 +216,56 @@ Comment 'ROADMAP' and I'll send you the exact learning order.
 @k8s.simplified · making Kubernetes click, one layer at a time
 
 "I tried to learn Kubernetes by memorizing every single resource type in the docs. Forty plus object types. Pods, Deployments, StatefulSets, DaemonSets, Jobs, CronJobs, Ingress. I made flashcards. Three weeks in, I couldn't explain what a Pod actually does. I was memorizing nouns, not understanding connections. Here's what actually works. Forget the list. You need exactly three things to start — a Pod, a Deployment, a Service. Learn those three cold, how they actually talk to each other, before you even open ConfigMaps or Ingress or Helm. Kubernetes isn't a list to memorize. It's layers you add once the layer underneath actually makes sense. Comment ROADMAP and I'll send you the exact order I'd learn K8s in if I started today."</div>
-    <div class="reply"><h2>ROADMAP</h2><p>Here's the order I'd actually learn Kubernetes in, no fluff: 1) Pods — the smallest deployable unit, understand what's actually running inside one (kubectl get pods, kubectl describe pod, kubectl logs). 2) Deployments — how Kubernetes keeps your Pods alive, scales them, and replaces them when they die (kubectl get deployments, kubectl rollout status). 3) Services — how traffic actually finds your Pods even as they get replaced (kubectl get svc, understand ClusterIP vs NodePort vs LoadBalancer). Only after those three feel boring and obvious, move to: 4) ConfigMaps and Secrets (configuration, not code, baked into images). 5) Ingress (routing traffic from outside the cluster). 6) Namespaces and RBAC (organizing and securing a real cluster). 7) StatefulSets, DaemonSets, Jobs/CronJobs (specialized workloads — you'll barely touch these your first few months). 8) Helm and Kustomize (templating, once you've written enough raw YAML to hate copy-pasting it). Don't skip ahead because a tutorial jumps there — skipping is exactly what burns people out in week one.</p></div>
+    <section class="reply"><h2>ROADMAP</h2><div class="guide"><p>By the end of this guide, you will understand the three core building blocks of Kubernetes—Pods, Deployments, and Services—by creating and connecting them from scratch. Instead of memorizing 40 different API objects, you will see how traffic flows from a network endpoint down into a running container. Mastering this relationship gives you the foundation needed to understand almost every advanced workload in Kubernetes.</p>
+<h3>Why this matters</h3>
+<p>Most beginners fail to learn Kubernetes because they treat the documentation like a vocabulary list. In reality, Kubernetes is designed as an onion: a <strong>Pod</strong> runs your container, a <strong>Deployment</strong> keeps that Pod alive and handles updates, and a <strong>Service</strong> gives those Pods a stable network identity. If you cannot trace how these three primitives talk to each other using labels and selectors, learning tools like Helm, Ingress, or Service Meshes will only lead to confusion.</p>
+<h3>Step 1: Create an isolated namespace</h3>
+<p>Create a dedicated namespace called <code>demo</code> so that your practice resources do not mix with default workloads and can be wiped clean in a single command later.</p>
+<pre data-lang="bash"><code>kubectl create namespace demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>namespace/demo created</code></pre>
+<h3>Step 2: Run a raw Pod to see the basic unit of compute</h3>
+<p>A <strong>Pod</strong> is the smallest deployable object in Kubernetes; it wraps one or more containers, shares storage, and assigns a single internal IP. Run a standalone Pod running <code>nginx:1.27</code> directly to see what a raw workload looks like before adding management layers.</p>
+<pre data-lang="bash"><code>kubectl run web-pod --image=nginx:1.27 --namespace=demo
+kubectl get pods -n demo -o wide</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>pod/web-pod created
+NAME      READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+web-pod   1/1     Running   0          5s    10.244.0.5   worker-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+<h3>Step 3: Delete the raw Pod and replace it with a Deployment</h3>
+<p>Standalone Pods do not self-heal; if the node dies or you manually delete the Pod, it stays gone forever. Delete the manual Pod and create a <strong>Deployment</strong> named <code>web</code> running <code>nginx:1.27</code> with 2 replicas so Kubernetes automatically manages Pod lifecycles.</p>
+<pre data-lang="bash"><code>kubectl delete pod web-pod -n demo
+kubectl create deployment web --image=nginx:1.27 --replicas=2 -n demo
+kubectl get pods -n demo -l app=web</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>pod "web-pod" deleted
+deployment.apps/web created
+NAME                   READY   STATUS    RESTARTS   AGE
+web-78d6494794-4kx2p   1/1     Running   0          6s
+web-78d6494794-w9zsl   1/1     Running   0          6s</code></pre>
+<h3>Step 4: Expose the Deployment with a ClusterIP Service</h3>
+<p>Pods are ephemeral; when a Pod crashes or rolls out a new version, it gets replaced with a new IP address. Create a <strong>Service</strong> named <code>web-service</code> targeting port 80, which provisions a stable internal IP address and load-balances traffic across all Pods matching the <code>app=web</code> label.</p>
+<pre data-lang="bash"><code>kubectl expose deployment web --name=web-service --port=80 --target-port=80 -n demo
+kubectl get service web-service -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>service/web-service exposed
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+web-service   ClusterIP   10.96.184.212   &lt;none&gt;        80/tcp    4s</code></pre>
+<h3>Step 5: Verify the traffic path from within the cluster</h3>
+<p>To confirm the Service correctly routes requests to the Deployment's underlying Pods, run a temporary debug Pod and make an HTTP request to the Service name using Kubernetes internal DNS.</p>
+<pre data-lang="bash"><code>kubectl run curl-test --image=curlimages/curl:8.7.1 --rm -it --restart=Never -n demo -- curl -s -I http://web-service.demo.svc.cluster.local</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>HTTP/1.1 200 OK
+Server: nginx/1.27.0
+Date: Mon, 16 Sep 2024 12:00:00 GMT
+Content-Type: text/html
+Content-Length: 615
+Connection: keep-alive
+pod "curl-test" deleted</code></pre>
+<h3>Common mistakes</h3>
+<ul><li><strong>Mismatched label selectors:</strong> The Service is created, but requests time out or return empty responses. Check <code>kubectl get endpoints web-service -n demo</code>. If the <code>ENDPOINTS</code> column is <code>&lt;none&gt;</code>, the <code>selector</code> inside the Service definition does not match the <code>labels</code> assigned to the Pods in your Deployment.</li><li><strong>Confusing port with targetPort:</strong> The client receives a connection refused error when curling the Service. <code>port</code> defines the port exposed on the Service IP itself, while <code>targetPort</code> must match the port your container process is actually listening on inside the Pod (e.g., port 80 for Nginx).</li><li><strong>Managing Pods directly in production:</strong> A Pod crashes, and your application goes down permanently without recovering. Never write naked Pod manifests for application workloads; always wrap them in a <code>Deployment</code> so the ReplicaSet controller guarantees desired state.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Created an isolated <code>demo</code> namespace to hold all exercise resources safely.</li><li>Ran a raw Pod to observe that containers require an enclosing Kubernetes wrapper.</li><li>Replaced the raw Pod with a <code>Deployment</code> to unlock declarative replicas and self-healing.</li><li>Attached a <code>Service</code> to give the dynamic Pod instances a single, permanent virtual IP and DNS name.</li><li>Sent traffic to the Service via internal DNS to verify complete end-to-end connectivity.</li></ol></div></section>
     <div class="handle-wrap">
       <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
       <div class="handle-menu" id="handle-menu" hidden>
