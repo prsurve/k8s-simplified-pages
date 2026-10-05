@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>I spent 6 months building a RAG system to diagnose Kubernetes incidents faster. Here's the one thing that actually mattered. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>I spent 6 months building a RAG system to diagnose Kubernetes incidents faster. Here's the one thing that actually mattered.</h1>
+    <div class="caption">I spent 6 months building a retrieval-augmented generation system for Kubernetes incident diagnosis. Here's what actually worked—and why raw logs don't cut it.
+
+When your cluster goes down, you don't need more logs. You need better context. A pod crash isn't just a pod crash—it's the node that got cordoned, the deployment that rolled out, the memory pressure that spiked five minutes before.
+
+RAG connects those dots for you. This video walks you through the real architecture, the three mistakes we made in production, and step-by-step code to build your own incident diagnosis system.
+
+Start with one incident type. Ingest logs. Make them searchable. Scale from there.
+
+What's the most painful incident your team debugs repeatedly? Comment below—I want to know.
+
+—
+@k8s.simplified · Real Kubernetes, real incidents.
+
+"I spent six months building a retrieval-augmented generation system to diagnose Kubernetes incidents faster. We had logs everywhere. We had dashboards. We had runbooks. But when prod went down at 3 AM, we still spent 45 minutes finding the right answer. So we built something smarter. Here's what we learned: the system didn't fail because we didn't have enough logs. It failed because we were searching like machines instead of thinking like engineers. And that one realization changed everything. Before we get into the build, let's be clear about what we're solving. When your Kubernetes cluster has an incident, you have three layers of information: application logs, infrastructure logs, and cluster events. Each tells a different story. A pod crashes. Traditional log search finds the crash message. But it doesn't tell you why the node ran out of memory. It doesn't tell you there was a deployment update five minutes before. It doesn't connect the dots. RAG stands for retrieval-augmented generation. It's a fancy name for a simple idea: retrieve relevant context from your logs and events, then use an LLM to synthesize an answer that a human would actually understand. Here's the architecture in 30 seconds. Logs and events flow into a vector database. When an incident happens, you ask a natural language question. The system retrieves relevant context and feeds it to an LLM. Let's walk through a real example. A pod keeps crashing. Your first instinct: kubectl logs. Let's see what that gives us. You get an out-of-memory error. That's the symptom. But you don't know if it's your code, a memory leak, or a node that's oversubscribed. So you dig deeper. You check node status. You look at resource requests and limits. You check if there were recent deployments. It takes 20 minutes to piece it together. Now imagine instead you just ask: why is this pod crashing? The RAG system retrieves the pod logs, the node metrics, recent deployments, and resource limits. Then it tells you the answer. But here's what we learned the hard way: RAG only works if you actually ingest the right context. We initially just threw raw logs at the vector database. Logs are messy. They have timestamps, stack traces, random variables. The embeddings got confused. We'd search for 'pod crash' and get back logs about deployments. We fixed it by preprocessing. Every log entry gets tagged with metadata: the pod name, namespace, container, error type. This structured context made the vector database actually useful. Second mistake: we didn't include cluster events. A pod crash is almost never just about that pod. There's context: a node was cordoned, a deployment rolled out, memory pressure spiked. We added event ingestion. Kubernetes events get enriched and stored in the same vector database. Now when you ask about a crash, the system retrieves logs AND the events that happened around that time. Third mistake: we let the LLM hallucinate. It would see logs and confidently generate answers that sounded right but weren't. We had to add grounding. Grounding means the LLM can only answer based on logs and events it actually retrieved. If the data doesn't exist, it says so. If it's uncertain, it says so. We also built in citation. Every answer includes which log entries or events it came from. That way your team can verify and learn. Now let's actually build the simplest version. I'm going to show you how to ingest logs into a vector database and query them with an LLM. We're using LangChain, Weaviate, and OpenAI, but the pattern works with any LLM. First, fetch your logs. We're using the Kubernetes Python client to get pod logs. In production, you'd pull from your log aggregator like Loki or Elasticsearch. Next, enrich the logs. Split them into chunks, add metadata, and prepare them for embedding. Store the chunks in your vector database. Weaviate is lightweight and good for learning. In production, you might use Pinecone or Milvus. Now create a retrieval chain. This takes your question, finds relevant logs, and passes them to the LLM. Finally, ask a question. The chain retrieves relevant logs, feeds them to the LLM, and returns a grounded answer. That's the happy path. But in production, there are complications. Logs are huge. Processing takes time. You need to think about cost and latency. Here's our approach: we only ingest logs from the last 7 days. We filter out noise—health checks, debug logs. And we batch process overnight to keep latency low during the day. Cost is real. We call the LLM only when someone asks a question, not on every log. And we cache embeddings so we're not recomputing them. For latency, we index proactively. Every night, we re-embed the last 7 days of logs. Queries are fast because the work is already done. We also wrapped it in a Slack bot. When there's an incident, engineers just ask the bot 'why did the API pod crash?' No CLI, no digging. The bot does the work. Here's the big takeaway from six months of work: RAG is only valuable if you feed it the right context. Raw logs, logs without metadata, logs without cluster events—these fail. We cut incident diagnosis time from 45 minutes to 5 minutes. Not because the LLM was smarter, but because we structured the data so it could actually understand Kubernetes. What would this look like for your team? Start small. Pick one type of incident—database pod crashes, for example. Ingest logs just for that. Build the retrieval system. Get it working on one problem. Don't try to solve all incidents at once. Don't expect perfect answers. Expect a tool that asks better follow-up questions than you would. If you want to go deeper, I've put the full code—logs enrichment, Weaviate setup, the Slack bot—in the pinned comment. It's a starting point for your own system. One last thing: your team's incident knowledge is worth money. Codify it. Put it in your logs. Make it searchable. That's what RAG does—it scales your expertise. If you're building something similar or you've tried RAG and hit different problems, comment below. I read every one. And subscribe—we ship this kind of real incident work every week. Thanks for watching. See you next week."</div>
+    
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
