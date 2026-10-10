@@ -1,0 +1,343 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Week two of Kubernetes, I could recite 40 object types and still couldn't deploy one app. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">practical</div>
+    <h1>Week two of Kubernetes, I could recite 40 object types and still couldn't deploy one app.</h1>
+    <div class="caption">Week two, I could name 40 Kubernetes objects and still couldn't deploy one app.
+
+If you're learning Kubernetes right now, skip the full resource list. Start with five things: Pods, Deployments, Services, ConfigMaps and Secrets. Those cover most of what a beginner touches in their first month.
+
+The real unlock is seeing how they connect. Delete a Pod, watch the Deployment replace it, then check which Service still routes traffic to it.
+
+Takeaway: learn the five, make them talk to each other, then look up the rest when you need it.
+
+Which one of the five confused you most when you started? Comment 'ROADMAP' and I'll send you the order I'd learn them in today.
+
+—
+@k8s.simplified · Kubernetes, without the memorizing.
+
+"Week two of Kubernetes, I could recite forty object types and still couldn't deploy one app. Jobs, CronJobs, DaemonSets, PodDisruptionBudgets. I knew every name. I had deployed nothing. A senior engineer watched me flip flashcards and said, learn five things. Run them. Break them. A Pod runs your container. A Deployment keeps Pods alive. A Service gives them one stable address. Delete a Pod and watch the Deployment spawn a replacement. That's the moment it finally clicked for me. Then ConfigMaps for settings, Secrets for passwords. Same idea: keep config outside your image. Comment 'ROADMAP' below and I'll send you the order I'd learn these five in if I started today."</div>
+    <section class="reply"><h2>ROADMAP</h2><div class="guide"><p>By the end of this guide, you will deploy a working web application using the five core Kubernetes objects: Pods, Deployments, Services, ConfigMaps, and Secrets. You will see firsthand how these resources wire together and heal automatically when things break. This practical foundation will save you weeks of memorizing API documentation you do not need yet.</p>
+<h3>Step 1: Create the namespace and store your configuration</h3>
+<p>Before running your container, separate its environment settings and credentials from the image using a <strong>ConfigMap</strong> and a <strong>Secret</strong>. We create an isolated namespace called <code>demo</code>, an unencrypted ConfigMap for plain configuration strings, and a Secret for sensitive credentials like API tokens.</p>
+<pre data-lang="bash"><code>kubectl create namespace demo
+kubectl create configmap web-config --from-literal=APP_ENV=production -n demo
+kubectl create secret generic web-secret --from-literal=DB_PASSWORD=supersecret -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>namespace/demo created
+configmap/web-config created
+secret/web-secret created</code></pre>
+<h3>Step 2: Deploy the self-healing application</h3>
+<p>A <strong>Pod</strong> runs your container, but you should rarely create a standalone Pod directly because it cannot recover if it crashes or the node dies. Instead, you create a <strong>Deployment</strong>, which defines the desired state, mounts the ConfigMap and Secret into the container environment, and continuously keeps the specified number of Pod replicas alive.</p>
+<pre data-lang="bash"><code>kubectl apply -n demo -f - &lt;&lt;EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - containerPort: 80
+        env:
+        - name: APP_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: web-config
+              key: APP_ENV
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: web-secret
+              key: DB_PASSWORD
+EOF</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>deployment.apps/web created</code></pre>
+<h3>Step 3: Verify the Pods and read the injected configuration</h3>
+<p>Check that the Deployment scheduled and started your two Pods successfully. Then, execute an environment check inside one of the running Pods to verify that the ConfigMap and Secret values were injected correctly into the container process.</p>
+<pre data-lang="bash"><code>kubectl get pods -n demo -l app=web
+POD_NAME=$(kubectl get pods -n demo -l app=web -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n demo "$POD_NAME" -- env | grep -E 'APP_ENV|DB_PASSWORD'</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>NAME                   READY   STATUS    RESTARTS   AGE
+web-7f89d4b68f-k2l8x   1/1     Running   0          18s
+web-7f89d4b68f-w79np   1/1     Running   0          18s
+APP_ENV=production
+DB_PASSWORD=supersecret</code></pre>
+<h3>Step 4: Expose the Pods with a stable Service</h3>
+<p>Every Pod gets its own internal IP address, but those IPs vanish whenever a Pod is recreated. A <strong>Service</strong> acts as a reliable front door by providing a single stable IP and internal DNS name, load-balancing incoming traffic across any Pod matching the selector label <code>app: web</code>.</p>
+<pre data-lang="bash"><code>kubectl apply -n demo -f - &lt;&lt;EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: ClusterIP
+  selector:
+    app: web
+  ports:
+  - port: 80
+    targetPort: 80
+EOF</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>service/web-service created</code></pre>
+<h3>Step 5: Test the route and observe self-healing</h3>
+<p>Now verify that the Service routes traffic to your Pods, then deliberately delete one Pod to see the Deployment replace it instantly. We spin up a temporary curl container inside the cluster to test the Service endpoint, delete a Pod, and confirm traffic never breaks.</p>
+<pre data-lang="bash"><code>kubectl run test-curl --image=curlimages/curl -n demo --rm -i --restart=Never -- curl -s -I http://web-service.demo.svc.cluster.local
+kubectl delete pod -n demo "$POD_NAME"
+kubectl get pods -n demo -l app=web</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>HTTP/1.1 200 OK
+Server: nginx/1.27.0
+Content-Type: text/html
+
+pod "web-7f89d4b68f-k2l8x" deleted
+NAME                   READY   STATUS    RESTARTS   AGE
+web-7f89d4b68f-w79np   1/1     Running   0          65s
+web-7f89d4b68f-9z2pq   1/1     Running   0          3s</code></pre>
+<h3>Why this matters</h3>
+<p>In production, servers fail, containers crash, and software needs continuous rollouts. If you deploy bare Pods, any node termination takes your service offline permanently.</p>
+<p>By tying these five objects together, you build a resilient pipeline. The ConfigMap and Secret allow you to build an image once and run it anywhere without baking passwords into container layers. The Deployment ensures your required scale is maintained automatically. The Service decouples internal routing from ephemeral container IPs. Once you understand this loop, you understand the core architecture of nearly every workload deployed to Kubernetes.</p>
+<h3>Common mistakes</h3>
+<ul><li><strong>Mismatched selector labels:</strong> The Service has <code>selector.app: web</code> while the Deployment template has <code>labels.app: frontend</code>. The symptom is that the Service gets created, but <code>kubectl get endpoints</code> shows <code>&lt;none&gt;</code> and all requests hang or time out. Fix this by ensuring the Service selector keys and values match the Deployment <code>spec.template.metadata.labels</code> block exactly.</li><li><strong>Missing or misspelled ConfigMap/Secret keys:</strong> Referencing a key name in the Deployment YAML that does not exist in the ConfigMap or Secret. The symptom is Pod status showing <code>CreateContainerConfigError</code>. Fix this by running <code>kubectl describe pod &lt;pod-name&gt; -n demo</code> to read the missing key name, then update your ConfigMap or Secret accordingly.</li><li><strong>Treating Secrets as true encryption by default:</strong> Forgetting that vanilla Kubernetes Secrets are simply base64-encoded strings, not encrypted at rest by default. The symptom is sensitive tokens exposed in cleartext to anyone with read access to the namespace. Fix this by integrating an external secret manager or enabling KMS encryption providers on your cluster.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Create a namespace and populate plain values with a ConfigMap and sensitive credentials with a Secret.</li><li>Define a Deployment that runs your container image and injects your settings as environment variables.</li><li>Verify that your Pods are running and that the configuration is available inside the container runtime.</li><li>Expose the dynamic Pod fleet behind a stable ClusterIP Service using label selectors.</li><li>Send traffic through the Service DNS name and delete a Pod to prove the Deployment heals itself without downtime.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
