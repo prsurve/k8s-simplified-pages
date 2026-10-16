@@ -1,0 +1,333 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Your Kubernetes node agent runs as root on almost every cluster. Here's the one-command check I wish I'd run years ago. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>Your Kubernetes node agent runs as root on almost every cluster. Here's the one-command check I wish I'd run years ago.</h1>
+    <div class="caption">Run this on your Kubernetes node: is the kubelet running as root? If yes, you're not alone, and that's the thing to fix. Rootless Kubernetes is the idea of running the node agent without full host power, and in v1.37 the KubeletInUserNamespace feature has graduated to beta. The kubelet starts and watches your pods. If it runs as root and a container escapes, the attacker lands on the host. Rootless mode shrinks that blast radius. Beta means you can try it, but test on staging first.
+
+Takeaway: check who runs your kubelet today.
+
+Did you know your kubelet runs as root? Comment 'CHECK' and I'll send you the exact steps to test rootless on a staging cluster.
+
+—
+@k8s.simplified · Kubernetes, explained like you're the intern.
+
+"Quick check. Run this on any Kubernetes node. If it says root, the agent that runs your containers has full control of the machine. The kubelet is the agent on every node. It starts your pods, watches their health, and reports back to the control plane. Rootless mode runs the kubelet inside a user namespace. Inside, it thinks it is root. Outside, it is just an ordinary user with a regular user ID. This feature called KubeletInUserNamespace has graduated to beta in Kubernetes version 1.37. Beta means it is available to try, but you have to turn it on yourself. Now picture the failure. A container escape lands on a node where the kubelet runs as root. The attacker now owns the host, not just one container. With rootless mode, the same escape hits a user with no real power over the machine. The damage stops at the edge of that namespace. Be honest about the trade-off. It is beta, it needs setup, and some features behave differently. Test it on a staging node before production. The rule. Know which user runs your kubelet, and treat root there as a risk to fix, not a default to accept."</div>
+    <section class="reply"><h2>CHECK</h2><div class="guide"><p>Shortly, you'll be able to tell whether the kubelet on your node runs as root, confirm what that means at the kernel level, and set up a staging node to test rootless mode. This matters because the kubelet starts and controls every pod on the machine, so its user decides how far a container escape can reach.</p>
+<h3>Step 1: Find out which user runs the kubelet</h3>
+<p>The kubelet is the agent on every node. It starts your pods, watches their health, and reports to the control plane. Start by listing the process and its owner. Run this on any node in your cluster, and use a staging node if you can.</p>
+<p>Why: the owner shown here is the user that holds the keys to the machine, so this is your baseline.</p>
+<pre data-lang="bash"><code>ps -o user,pid,cmd -C kubelet</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>USER     PID CMD
+root    1423 /usr/bin/kubelet --config=/var/lib/kubelet/config.yaml --kubeconfig=/etc/kubernetes/kubelet.conf</code></pre>
+<p>If the first column says <code>root</code>, your kubelet has full host power. Most clusters look like this today.</p>
+<h3>Step 2: Confirm the real user IDs from the kernel's view</h3>
+<p>Process listings can be misleading, so check the kernel's record. The <code>Uid</code> line in <code>/proc</code> shows the real, effective, saved, and filesystem user IDs, and the <code>uid_map</code> file shows how user IDs inside a user namespace map to the host.</p>
+<p>Why: a process inside a user namespace can think it is root while being an ordinary user on the host. This check shows which situation you are in.</p>
+<pre data-lang="bash"><code>PID=$(pgrep -o -x kubelet)
+grep '^Uid' /proc/$PID/status
+cat /proc/$PID/uid_map</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>Uid:    0       0       0       0
+         0          0 4294967295</code></pre>
+<p>Here, <code>0</code> maps to host user <code>0</code>, and the range covers all IDs. That means the kubelet is real root on the host. A rootless kubelet would show a mapping such as <code>0 1000 1</code>, meaning the process believes it is root, but it is host user 1000.</p>
+<h3>Step 3: Check whether the feature gate is set on your staging node</h3>
+<p>KubeletInUserNamespace is a feature gate, which is a switch the kubelet reads at startup. Check your kubelet configuration file and the process arguments for it. Run this on the staging node only.</p>
+<p>Why: you need to know whether the gate is already on, off, or not mentioned at all before you change anything.</p>
+<pre data-lang="bash"><code>sudo grep -A3 featureGates /var/lib/kubelet/config.yaml
+ps -o cmd -C kubelet | grep -o 'feature-gates=[^ ]*'</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>(no output)</code></pre>
+<p>No output means the gate is not set, so the kubelet uses its default. Check the Kubernetes release notes for your version to confirm the feature's current stage, because the stage determines whether you can enable it safely. Beta means it is available but opt-in, so you must enable it yourself.</p>
+<h3>Step 4: Enable the gate and restart the kubelet on staging</h3>
+<p>Add the gate to the kubelet configuration file. Setting it through the config file is cleaner than editing command-line flags, and it survives restarts. This change alone does not make the kubelet rootless. Rootless mode also needs the kubelet started inside a user namespace, usually through a wrapper such as RootlessKit, and that setup varies by distribution and container runtime. Follow the official rootless documentation for the wrapper and unit file.</p>
+<p>Why: the feature gate tells the kubelet it is allowed to run in a user namespace. Without it, the kubelet will refuse that setup.</p>
+<pre data-lang="yaml"><code>apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+featureGates:
+  KubeletInUserNamespace: true</code></pre>
+<p>Then restart the service and confirm it is healthy.</p>
+<pre data-lang="bash"><code>sudo systemctl restart kubelet
+systemctl status kubelet --no-pager</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>● kubelet.service - kubelet: The Kubernetes Node Agent
+     Loaded: loaded (/usr/lib/systemd/system/kubelet.service; enabled)
+     Active: active (running) since Tue 2025-06-03 10:14:22 UTC; 4s ago</code></pre>
+<p>If the status is <code>failed</code>, read the logs with <code>journalctl -u kubelet --no-pager -n 50</code> before doing anything else.</p>
+<h3>Step 5: Prove pods still run on the test node</h3>
+<p>Deploy a small workload into a namespace called demo, then confirm the node is ready and the pod runs. This tells you whether the trade-offs you accepted are workable.</p>
+<p>Why: rootless mode can change how some features behave, so a real pod is the only reliable test.</p>
+<pre data-lang="yaml"><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - containerPort: 80</code></pre>
+<p>Apply it and check the result.</p>
+<pre data-lang="bash"><code>kubectl apply -f web.yaml
+kubectl -n demo get pods -o wide</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>namespace/demo created
+deployment.apps/web created
+NAME                   READY   STATUS    RESTARTS   AGE   IP           NODE
+web-7d9f6b8c5-x2k4p    1/1     Running   0          21s   10.244.1.6   staging-node-1</code></pre>
+<p>If the pod sits in <code>Pending</code> or <code>ContainerCreating</code>, describe it with <code>kubectl -n demo describe pod</code> and check the events.</p>
+<h3>Why this matters</h3>
+<p>If the kubelet runs as root and a container escapes, the attacker lands on the host with root. That means they can read secrets from other pods, change system files, and move to other machines. With rootless mode, the same escape reaches a user with no real power over the machine, so the damage stays much smaller.</p>
+<p>Be honest about the trade-off. The feature is beta, it needs setup, and some features behave differently. Test it on a staging node before you touch production.</p>
+<h3>Common mistakes</h3>
+<ul><li><strong>Checking the wrong process.</strong> You run <code>ps</code> and see a <code>kubelet</code> line from a container or an old shell, and you think the node is safe. Fix it by using <code>pgrep -o -x kubelet</code>, which matches only the exact process name and returns the oldest one.</li><li><strong>Enabling the gate on a live node.</strong> Your pods restart unexpectedly after you change the config. Fix it by doing every change on a staging node first and draining production nodes before any change.</li><li><strong>Assuming the gate alone is rootless.</strong> You set <code>KubeletInUserNamespace</code> and the kubelet still shows <code>Uid: 0 0 0 0</code>. Fix it by checking <code>uid_map</code> in Step 2 and confirming the kubelet starts inside a user namespace through the wrapper described in the rootless docs.</li><li><strong>Ignoring the feature stage.</strong> You enable an alpha or unclear feature in production because a post said it was ready. Fix it by reading the release notes for your exact version before enabling any gate.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Run <code>ps -o user,pid,cmd -C kubelet</code> to see who owns the kubelet process.</li><li>Check <code>/proc/&lt;pid&gt;/status</code> and <code>uid_map</code> to confirm real root versus a mapped user.</li><li>Look for existing feature gates in the kubelet config file and process arguments.</li><li>Enable <code>KubeletInUserNamespace</code> in the kubelet configuration on a staging node, then restart the kubelet.</li><li>Deploy a test workload in the demo namespace and confirm the pod runs before you consider anything else.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
