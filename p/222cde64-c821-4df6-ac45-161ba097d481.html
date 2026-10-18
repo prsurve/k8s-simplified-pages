@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Kubernetes just made one of its quietly important features stable, and if you've ever typed kubectl top and wondered where those numbers come from, this one is for you. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>Kubernetes just made one of its quietly important features stable, and if you've ever typed kubectl top and wondered where those numbers come from, this one is for you.</h1>
+    <div class="caption">Kubernetes just made the Metrics API stable, and I still remember the afternoon I guessed CPU limits because I didn't know these numbers existed.
+
+The Metrics API is how Kubernetes answers one question: how much CPU and memory is this pod or node using right now? kubectl top reads it, and the Horizontal Pod Autoscaler depends on it. Metrics-server is the collector behind it.
+
+Takeaway: before you tune your autoscaling rules, check that the Metrics API is actually answering.
+
+Full walkthrough is on YouTube, with the commands in the pinned post. Which kubectl command do you use first when something feels slow? Tell me in the comments.
+
+—
+@k8s.simplified · Kubernetes, explained simply.
+
+"Kubernetes just made one of its quietly important features stable. The Metrics API. If you've ever typed kubectl top and wondered where the numbers come from, stay with me. Here is the honest version. I once spent a whole afternoon guessing how much CPU a service needed, because I didn't know those numbers existed. By the end of this video, you will check cluster usage with a few commands, find the heaviest pod, and understand why autoscaling depends on this API. No theory dump. We go from the question, what is using my CPU, to a working scale-up test in your own cluster. Why this matters. Kubernetes knows where your pods run. It does not know how hungry they are, unless something measures them. The Metrics API is the standard way for Kubernetes to answer one question: how much CPU and memory is this pod or node using right now? Stable here is a promise. The shape of the API stops changing under you, so the tools built on top of it can rely on it. Here is the part most tutorials skip. The Metrics API is only an interface. It is not the thing collecting the data. The collector is metrics-server. It runs as a pod in your cluster, asks each node for usage numbers, and serves them through the Metrics API. The kubelet is the agent running on every node. It already tracks container resource usage, so metrics-server simply reads what is already there. So the chain is simple. Containers, then kubelet, then metrics-server, then the Metrics API, then kubectl top or an autoscaler. Notice what it is not. It is not Prometheus. Prometheus keeps history for dashboards and alerts. The Metrics API gives you right now, and only right now. That one difference explains a lot of beginner confusion. Why does kubectl top show a single number and not a graph? Because it was never built to store the past. What does it measure? Two things, CPU and memory, for nodes and for pods. That is the entire scope. Keep that small scope in mind for the rest of this video. Why does autoscaling care? The Horizontal Pod Autoscaler reads CPU usage from this API. No metrics means no scaling decision. It just sits there. Here is my war story. Once I set up an autoscaler on a fresh cluster, and it did absolutely nothing for an hour. Metrics-server had never been installed. The autoscaler showed unknown for its target. No crash, no stack trace. Just a quiet unknown, which is far harder to spot than an error. The lesson: before you blame your scaling rules, check whether the Metrics API is actually answering. We will check that in the walkthrough. Watch the flow. Each node's kubelet reports usage. Metrics-server collects those reports, and the API serves a fresh snapshot every time something asks. Walkthrough time. Start by confirming your cluster version, so you know exactly what you are testing against. Next, check whether the Metrics API is registered. Kubernetes exposes it as an APIService. If it is listed, the chain is connected. Read the columns. The AVAILABLE column matters most. True means the API is answering. False means something upstream is broken. Now check the collector itself. Metrics-server usually lives in the kube-system namespace, and the official manifests label it with k8s-app equals metrics-server. If that pod is not Running, kubectl top will fail. A healthy pod is your first green light. Next, ask for live node usage. Now run kubectl top nodes. You get CPU and memory for every node, plus the percentage of each node that is in use. CPU shows in millicores. One thousand millicores is one full core. Memory shows in mebibytes or gibibytes. Learn those two units once and they stay useful. Now the pods. Add the all namespaces flag and sort by CPU, so the heaviest workload rises to the top of the list. Sorting by memory works the same way. Swap cpu for memory when you are hunting an out-of-memory problem instead of a slow app. Pods can hold several containers. A sidecar might be eating more CPU than your app. The containers flag breaks usage down per container. The pod name in that command is only an example. Yours will have a different suffix, so run get pods first and copy the real name. Let us prove the numbers change. Start a deliberate load generator. This loop burns CPU forever, so we will delete it at the end. Give it about thirty seconds, then check again. Metrics refresh on an interval, so a brand new pod may show almost nothing at first. Now check the load pod's usage. There it is. CPU climbing toward a full core. This is the Metrics API doing its one job: giving you the snapshot as it is right now. Now connect it to scaling. Assume a deployment called web already exists. We create an autoscaler targeting fifty percent CPU, between two and ten replicas. Watch the autoscaler. The targets column compares current usage against your fifty percent goal. Those current numbers come straight from the Metrics API. Here is the trap. If the Metrics API fails, the autoscaler stops making good decisions. It is only as reliable as the numbers it reads. When metrics-server is down or unhealthy, this is the message you will see. Memorize it. It is the most common Metrics API error beginners hit. That message means kubectl could not reach the aggregated API. Do not start by editing your app. Start from the top of the chain and walk back down. Check whether the APIService is available, then whether the metrics-server pod is running. Then read its logs, which explain why it cannot scrape a node. Now the payoff. As load climbs past the target, the autoscaler adds pods. Each new replica takes its share of traffic until usage settles back down. Now clean up. Delete the load pod, because a busy loop running forever will keep burning CPU on your node until you stop it. Watch the replicas drop. Once usage falls, the autoscaler waits out a short cooldown and then scales back down toward the minimum. Recap, part one. The Metrics API answers one question: how much CPU and memory is this pod or node using right now. Part two. Metrics-server is the collector. If it is down, kubectl top and autoscaling both go quiet at the same time. Part three. When something breaks, walk the chain from the top: APIService, then the pod, then the logs. Not your application code. Here is the one takeaway to remember. Before you tune scaling rules, check that the Metrics API is answering. Write that on a sticky note. If this clicked, subscribe. Then check the pinned post for the commands from this video in one list, so you can run them on your own cluster today. Drop your cluster version in the comments, and tell me which command surprised you the most. I reply to the first ten. See you in the next one. Keep your metrics honest, and keep your autoscalers fed."</div>
+    
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
