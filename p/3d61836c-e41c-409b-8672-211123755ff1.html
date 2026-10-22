@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>I wanted to contribute to open source for two years. My count was still zero. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>I wanted to contribute to open source for two years. My count was still zero.</h1>
+    <div class="caption">Two years of 'I'll contribute soon' and my GitHub count stayed at zero.
+
+Open source is where Kubernetes and DevOps tools actually get built, and the OSPO Summit China 2026 in Shanghai, alongside OSPOlogy, is a good place to learn how companies run it well. But the real starting point is much smaller: filter for issues labeled good first issue, pick one that fits your skills, and get a single pull request merged.
+
+Takeaway: one merged pull request beats a year of intentions.
+
+What's stopping you from opening your first issue this week? Comment 'OSS' and I'll share the command list I use.
+
+—
+@k8s.simplified · Kubernetes, one concept at a time.
+
+"For two years I said I would contribute to open source. My contribution count never moved off zero. OSPOlogy is a learning program about how companies run open source well, and the OSPO Summit in Shanghai brings that community together. The part nobody tells beginners is that open source projects run on small, specific tasks. Most of them are labeled and waiting for someone new. A contribution moves through three states: draft, review, and merged. Only the merged state counts as done. My first try was a huge issue in a big Kubernetes project. It sat untouched for three months, and I felt invisible. Start with issues labeled good first issue. Filter for them from the terminal, with the GitHub command line tool. Then check your own progress. This command lists only the pull requests you have had merged. One merged pull request beats a year of good intentions. Save this and go find your first issue."</div>
+    <section class="reply"><h2>OSS</h2><div class="guide"><p>By the end of this guide, you will be able to find real beginner-friendly Kubernetes ecosystem issues from your command line, set up a local workspace, and track your merged contributions. Open-source tools like Kubernetes are built on hundreds of small, incremental patches, and learning to ship a single small fix is the fastest way to build credibility as a DevOps engineer. You will use the official GitHub CLI (<code>gh</code>) and standard Git workflows to turn passive reading into merged code.</p>
+<h3>Why this matters</h3>
+<p>Most beginners fail to contribute to Kubernetes projects because they pick massive architecture issues or wait until they feel like an expert. Kubernetes and its ecosystem (Helm, Prometheus, Envoy) use issue labels like <code>good first issue</code> and <code>help wanted</code> specifically to welcome newcomers. Knowing how to query these tasks directly from your terminal eliminates analysis paralysis and gets you straight into the codebase.</p>
+<h3>Step 1: Install and authenticate the GitHub CLI</h3>
+<p>Install the official GitHub CLI tool (<code>gh</code>) and log in so you can search repositories and manage pull requests directly from your terminal. This avoids context switching between your browser and editor.</p>
+<pre data-lang="bash"><code>gh auth status</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>github.com
+  ✓ Logged in to github.com account yourname (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo'</code></pre>
+<h3>Step 2: Search for beginner issues across Kubernetes repositories</h3>
+<p>Use the <code>gh issue list</code> command to filter for open issues labeled <code>good first issue</code> in an active ecosystem project like Kubernetes SIGs examples or documentation. This shows you well-scoped tasks such as typo fixes, documentation updates, or small unit tests.</p>
+<pre data-lang="bash"><code>gh issue list --repo kubernetes-sigs/kind --label "good first issue" --state open --limit 5</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>#3412  Update node image documentation for v1.31      good first issue  about 2 days ago
+#3398  Clarify docker socket permission error         good first issue  about 1 week ago
+#3345  Fix typo in quick-start guide                  good first issue  about 3 weeks ago</code></pre>
+<h3>Step 3: Fork and clone the target repository</h3>
+<p>Once you identify an issue you want to resolve, fork the repository to your personal profile and clone it locally using <code>gh repo fork</code>. This command configures both your personal fork (<code>origin</code>) and the upstream project repository (<code>upstream</code>) automatically.</p>
+<pre data-lang="bash"><code>gh repo fork kubernetes-sigs/kind --clone=true</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>✓ Created fork yourname/kind
+✓ Cloned fork
+✓ Added remote upstream</code></pre>
+<h3>Step 4: Create a dedicated branch and inspect the changes</h3>
+<p>Change into the repository directory and cut a new branch for your specific fix. Keeping your change isolated on a distinct feature branch ensures clean Git history and avoids conflicts with <code>main</code>.</p>
+<pre data-lang="bash"><code>cd kind &amp;&amp; git checkout -b fix-docs-typo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>Switched to a new branch 'fix-docs-typo'</code></pre>
+<h3>Step 5: Check your merged contributions</h3>
+<p>After you submit your pull request and address code review feedback, the project maintainers merge your code. Run this search query with the GitHub CLI to view only your merged pull requests across GitHub, proving your contributions are complete.</p>
+<pre data-lang="bash"><code>gh search prs --author "@me" --state merged --limit 5</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>#3345  Fix typo in quick-start guide  kubernetes-sigs/kind  MERGED  about 1 hour ago</code></pre>
+<h3>Common mistakes</h3>
+<ul><li>Taking on an unassigned issue without commenting: Other contributors might already be working on it. Check the comments first and post a quick note asking the maintainers if the issue is still open for a PR.</li><li>Submitting a pull request directly from your <code>main</code> branch: If upstream merges new commits while your PR is in review, syncing <code>main</code> becomes messy. Always create a dedicated branch like <code>git checkout -b fix-issue-123</code>.</li><li>Ignoring sign-off requirements: Most CNCF and Kubernetes projects require the Developer Certificate of Origin (<code>Signed-off-by</code>). If your commits fail CI checks, ensure you commit with <code>git commit -s</code> to attach your signature.</li><li>Submitting huge PRs covering multiple problems: Reviewers will delay reviewing massive changes. Keep your PR focused on exactly one issue or bug.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Authenticate your terminal with <code>gh auth status</code> to interact with GitHub repositories directly.</li><li>Filter target repositories for tasks marked with the <code>good first issue</code> label.</li><li>Fork and clone the repository with <code>gh repo fork</code> to configure remotes automatically.</li><li>Create an isolated feature branch using <code>git checkout -b</code> before making your edits.</li><li>Track and verify your completed work using <code>gh search prs --author "@me" --state merged</code>.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
