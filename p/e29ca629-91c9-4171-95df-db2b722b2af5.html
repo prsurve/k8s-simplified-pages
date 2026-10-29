@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>I deleted the app, but the storage bill kept coming. Here is the one command that shows what I missed. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">practical</div>
+    <h1>I deleted the app, but the storage bill kept coming. Here is the one command that shows what I missed.</h1>
+    <div class="caption">Deleted the app, but the storage bill kept coming? Check kubectl get pv.
+
+When you delete a Deployment, the Persistent Volume Claim can stay behind. Delete that too, and the underlying Persistent Volume often moves to Released instead of disappearing. If RECLAIM POLICY says Retain, the disk keeps running in your cloud account with nothing attached to it.
+
+Run kubectl get pv after every cleanup. Look at RECLAIM POLICY and STATUS before you assume storage went away with the app.
+
+What is the oldest storage in your cluster that nobody remembers creating? Tell me below.
+
+—
+@k8s.simplified · Kubernetes, one plain lesson at a time.
+
+"You deleted the app. The pods are gone. But the storage bill is still going up. The app asked for a Persistent Volume Claim, which is a request for disk space. Kubernetes matched that request to a real Persistent Volume, and that volume points to a real disk in your cloud account. When you delete the Deployment, the claim can stay behind. The claim is a separate object, so it does not vanish with the pods. Now delete the claim too. Watch what happens to the volume. It does not disappear. Its status flips to Released, and the disk keeps existing. To see what is still hanging around, run kubectl get pv. This lists every Persistent Volume in the cluster, not just the ones your apps use. Look at two columns. If RECLAIM POLICY says Retain and STATUS says Released, Kubernetes is keeping that disk on purpose and nothing is using it. Retain can be intentional, so do not delete blindly. Check with the owner first. Free tools like OrphanScan, which is read-only and never deletes anything, can help you find these candidates. The fix starts before the claim is deleted. The reclaim policy decides what happens to the disk when the claim goes. Delete means the disk is removed with it. Retain means the disk stays. Here is the rule. Before you delete an app, check its storage with kubectl get pv. Comment 'STORAGE' and I will send you the checklist. Follow K8s Simplified for a new Kubernetes lesson every day."</div>
+    <section class="reply"><h2>STORAGE</h2><div class="guide"><p>Before you delete an app, you should know which storage it uses and what Kubernetes will do with that storage afterward. By the end of this guide, you will be able to find the Persistent Volumes behind an app, read their reclaim policy and status, and spot disks that are still running with nothing attached. This matters because cloud disks keep billing you even when no pod is using them.</p>
+<h3>Why this matters</h3>
+<p>A Deployment creates pods, and pods are disposable. Storage is handled by two separate objects. A <strong>Persistent Volume Claim</strong> (PVC) is the app's request for disk space. A <strong>Persistent Volume</strong> (PV) is the actual piece of storage, which usually maps to a real disk in your cloud account. Deleting the Deployment removes the pods, but it does not automatically remove the PVC or the PV. Each object has its own lifecycle, so you have to check each one.</p>
+<h3>Step 1: Find the storage your app uses</h3>
+<p>Start by listing the PVCs in the namespace where the app runs. The namespace is <code>demo</code> in this example. The claim is the link between your app and the disk, so it tells you what is at stake before you delete anything.</p>
+<pre data-lang="bash"><code>kubectl get pvc -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>NAME       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+web-data   Bound    pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c   5Gi        RWO            standard       12d</code></pre>
+<p>The <code>VOLUME</code> column gives you the name of the PV bound to this claim. Write it down. You will need it in later steps.</p>
+<h3>Step 2: Check the reclaim policy on that volume</h3>
+<p>Next, look at the PV itself. The <strong>reclaim policy</strong> decides what happens to the disk when its claim is deleted. <code>Delete</code> removes the disk along with the claim. <code>Retain</code> keeps the disk and its data, and leaves cleanup to you.</p>
+<pre data-lang="bash"><code>kubectl get pv pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   REASON   AGE
+pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c   5Gi        RWO            Retain           Bound    demo/web-data     standard                12d</code></pre>
+<p>Here the policy is <code>Retain</code>. That means deleting the claim will leave the disk behind. If you see <code>Delete</code> instead, the disk will be removed with the claim, which is safer for billing but destroys the data. Either way, you now know what to expect. If you want to confirm the policy at the source, <code>kubectl describe pv</code> shows the same field along with the backing disk details.</p>
+<h3>Step 3: Delete the app and the claim, then watch the volume</h3>
+<p>Now remove the Deployment and the PVC. Deleting the Deployment stops the pods. Deleting the PVC releases the claim. Do these in order so you can see the effect of each one.</p>
+<pre data-lang="bash"><code>kubectl delete deployment web -n demo
+kubectl delete pvc web-data -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>deployment.apps "web" deleted
+persistentvolumeclaim "web-data" deleted</code></pre>
+<p>Then check the volume again.</p>
+<pre data-lang="bash"><code>kubectl get pv</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM             STORAGECLASS   REASON   AGE
+pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c   5Gi        RWO            Retain           Released   demo/web-data     standard                12d</code></pre>
+<p>The volume did not disappear. Its status is now <code>Released</code>, which means no claim is bound to it. Because the policy is <code>Retain</code>, the disk still exists in your cloud account and still costs money. The <code>kubectl get pv</code> command lists every PV in the cluster, not just the ones your apps use, so it also shows storage from apps you deleted long ago.</p>
+<h3>Step 4: Decide what to do with each Released volume</h3>
+<p>Once you have a list of <code>Released</code> volumes, treat each one as a question, not a deletion. Ask the owner whether the data is still needed. A <code>Retain</code> volume might hold a database backup that someone is keeping on purpose. If the data is not needed, you can switch the policy to <code>Delete</code> and then remove the PV object. Deleting the PV with a <code>Delete</code> policy also removes the cloud disk.</p>
+<pre data-lang="bash"><code>kubectl patch pv pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c -p '{"spec":{"persistentVolumeReclaimPolicy":"Delete"}}'
+kubectl delete pv pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>persistentvolume/pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c patched
+persistentvolume "pvc-3f9c2a1e-7b4d-4e8a-9c21-5d6e0f1a2b3c" deleted</code></pre>
+<p>Run <code>kubectl get pv</code> again afterward. The volume should be gone from the list. Then check your cloud console to confirm the disk was removed. Kubernetes reports the PV deletion, but your cloud account is where the bill comes from, so verify there too.</p>
+<h3>Common mistakes</h3>
+<ul><li><strong>Deleting a Retain volume without asking.</strong> The symptom is that the data is gone and someone asks where it went. The fix is to confirm with the owner before you patch or delete a PV.</li><li><strong>Assuming the Deployment deleted the storage.</strong> The symptom is a cloud bill that keeps growing after the pods are gone. The fix is to run <code>kubectl get pvc -n demo</code> and <code>kubectl get pv</code> after every cleanup.</li><li><strong>Deleting the PVC while the pod still runs.</strong> The symptom is a PVC stuck in <code>Terminating</code> until the pod stops. The fix is to delete the Deployment first, then the claim.</li><li><strong>Ignoring Released volumes.</strong> The symptom is a PV listed as <code>Released</code> for months. The fix is to review <code>kubectl get pv</code> on a schedule and act on each row.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>List the claims in the app's namespace with <code>kubectl get pvc -n demo</code>.</li><li>Note the bound PV and check its RECLAIM POLICY with <code>kubectl get pv</code>.</li><li>Delete the Deployment, then the PVC, and check that the PV shows <code>Released</code>.</li><li>For each Released volume, confirm with the owner before changing the policy or deleting the PV.</li><li>Verify in your cloud console that the disk is gone.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
