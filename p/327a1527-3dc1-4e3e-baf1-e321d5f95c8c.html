@@ -1,0 +1,338 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Your AI training job has eight workers. One of them died three hours ago, and the other seven have been waiting ever since. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>Your AI training job has eight workers. One of them died three hours ago, and the other seven have been waiting ever since.</h1>
+    <div class="caption">Kubernetes AI training jobs can stall for hours after one tiny pod crash.
+
+Distributed training needs every worker in sync, so one dead pod stops the whole run. Kubernetes restarts the pod, but a fresh pod starts from zero unless you saved checkpoints outside it. I learned this the hard way on a run that lost an entire night.
+
+Takeaway: pods are disposable, checkpoints are not. Save them to a persistent volume.
+
+What's the longest you've lost to a restart? Tell me below.
+
+Save this for your next cluster setup.
+—
+@k8s.simplified · Kubernetes, one day at a time.
+
+"Your AI training job has eight workers. Seven are running. One crashed three hours ago, and nobody noticed. Distributed training works like a team rowing in sync. Every worker must reach the same step before anyone moves on. Kubernetes runs each worker as a pod, and spreads those pods across GPU nodes. Each pod is one piece of the same job. When a pod dies, Kubernetes starts a replacement. But the new pod is blank. It has no memory of where the training stopped. Here is a real one. A worker hit its memory limit and exited with code 137. The whole run restarted from step zero. The fix is to save checkpoints to a persistent volume. That storage lives outside the pod, so a crash cannot erase it. Pods are disposable. Checkpoints are not. Comment 'CHECKPOINT' and I will send you the starter manifest. Follow K8s Simplified for a new Kubernetes lesson every day."</div>
+    <section class="reply"><h2>CHECKPOINT</h2><div class="guide"><p>In distributed training, losing a single worker halts your entire job because all nodes must stay synchronized. If that replacement worker starts without state, hours of expensive GPU compute vanish into thin air. By the end of this guide, you will be able to configure shared persistent storage across multi-worker training jobs so crashed pods recover immediately from the latest checkpoint.</p>
+<h3>Why this matters</h3>
+<p>Distributed training frameworks like PyTorch Distributed Data Parallel (DDP) run workers that process different batches of data in parallel. At the end of every forward and backward pass, the workers must communicate to synchronize gradients before updating the model weights. If worker 3 crashes—often due to an out-of-memory error causing an exit code 137—the other seven workers block indefinitely while waiting for it to report in.</p>
+<p>When Kubernetes restarts that failed pod, the pod arrives with a clean local disk. If your training script was saving checkpoint weights to the pod's local directory, those weights are gone. The revived pod must start at step zero, which either desynchronizes the cluster or forces the entire job to restart from scratch. To prevent this, your checkpoints must live on a shared <strong>PersistentVolume</strong> accessible by every worker.</p>
+<h3>Step 1: Create a shared namespace</h3>
+<p>Create a dedicated namespace called <code>ai-workloads</code> so all resources stay grouped together. This isolates your storage and workloads from default cluster operations.</p>
+<pre data-lang="bash"><code>kubectl create namespace ai-workloads</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>namespace/ai-workloads created</code></pre>
+<h3>Step 2: Request ReadWriteMany storage</h3>
+<p>Create a PersistentVolumeClaim named <code>checkpoint-pvc</code> with <code>ReadWriteMany</code> access mode. This mode allows all training pods to attach to the same volume simultaneously and write their checkpoint files.</p>
+<p>Save the following manifest to <code>pvc.yaml</code> and apply it:</p>
+<pre data-lang="yaml"><code>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: checkpoint-pvc
+  namespace: ai-workloads
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi</code></pre>
+<pre data-lang="bash"><code>kubectl apply -f pvc.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>persistentvolumeclaim/checkpoint-pvc created</code></pre>
+<h3>Step 3: Verify the claim is bound</h3>
+<p>Check the status of your volume claim before launching workloads to ensure the cluster has provisioned underlying shared storage. A claim stuck in <code>Pending</code> means your storage class cannot support multiple simultaneous mounts.</p>
+<pre data-lang="bash"><code>kubectl get pvc checkpoint-pvc -n ai-workloads</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+checkpoint-pvc   Bound    pvc-8b1a3d90-34fa-4ce2-b2d4-1a5c8e390ab1   50Gi       RWX            nfs-client     12s</code></pre>
+<h3>Step 4: Run a multi-worker job mounting the volume</h3>
+<p>Deploy an indexed Kubernetes Job named <code>distributed-training</code> with two worker completions. Each pod mounts the shared PVC at <code>/checkpoints</code>, where training loops read and write saved state.</p>
+<p>Save the following manifest to <code>job.yaml</code> and apply it:</p>
+<pre data-lang="yaml"><code>apiVersion: batch/v1
+kind: Job
+metadata:
+  name: distributed-training
+  namespace: ai-workloads
+spec:
+  completions: 2
+  parallelism: 2
+  completionMode: Indexed
+  template:
+    metadata:
+      labels:
+        app: training-worker
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: worker
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Checking for latest checkpoint on shared volume...";
+            ls -l /checkpoints;
+            echo "Worker $JOB_COMPLETION_INDEX writing step 500 state...";
+            echo "weights_step_500" &gt; /checkpoints/model_worker_${JOB_COMPLETION_INDEX}.pt;
+            sleep 10;
+        volumeMounts:
+        - name: checkpoint-storage
+          mountPath: /checkpoints
+      volumes:
+      - name: checkpoint-storage
+        persistentVolumeClaim:
+          claimName: checkpoint-pvc</code></pre>
+<pre data-lang="bash"><code>kubectl apply -f job.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>job.batch/distributed-training created</code></pre>
+<h3>Step 5: Verify checkpoint persistence across workers</h3>
+<p>Check the log output of one of the completed pods to confirm it mounted the shared path and saved its checkpoint file.</p>
+<pre data-lang="bash"><code>kubectl logs distributed-training-0-0 -n ai-workloads</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>Checking for latest checkpoint on shared volume...
+total 0
+Worker 0 writing step 500 state...</code></pre>
+<p>Inspect the second worker to confirm both workers operated against the same shared storage location.</p>
+<pre data-lang="bash"><code>kubectl logs distributed-training-1-1 -n ai-workloads</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>Checking for latest checkpoint on shared volume...
+-rw-r--r-- 1 root root 17 May 10 14:00 model_worker_0.pt
+Worker 1 writing step 500 state...</code></pre>
+<h3>Common mistakes</h3>
+<ul><li>Using <code>ReadWriteOnce</code> instead of <code>ReadWriteMany</code>: The first pod mounts the volume successfully, but subsequent pods on different nodes stay stuck in <code>ContainerCreating</code> with <code>FailedMount</code> warnings. Always ensure your storage class supports multi-node read-write access.</li><li>Writing to container local storage: Storing checkpoints in an unmounted path like <code>/tmp</code> or the working directory causes data loss when a pod restarts. Ensure your application checkpointing logic writes explicitly to the mounted path.</li><li>Hardcoding checkpoint filenames without epochs: Overwriting a single <code>model.pt</code> file can corrupt weights if a pod crashes midway through a write operation. Save checkpoints with step numbers, like <code>model_step_100.pt</code>, and implement an atomic rename.</li><li>Setting restart policies to <code>Never</code>: If a training pod crashes under <code>restartPolicy: Never</code>, Kubernetes marks the pod failed and will not restart it, leaving remaining workers blocked indefinitely. Use <code>restartPolicy: OnFailure</code>.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Create a dedicated <code>ai-workloads</code> namespace to isolate distributed training components.</li><li>Define a PersistentVolumeClaim with <code>ReadWriteMany</code> access so multiple nodes can read and write simultaneously.</li><li>Validate that your storage provider binds the claim properly before deploying pods.</li><li>Mount the persistent volume to <code>/checkpoints</code> across all workers in your training job manifest.</li><li>Verify that each worker reads and writes persistent state directly to the shared volume path.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
