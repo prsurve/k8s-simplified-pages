@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>One command deleted 42 pods, and I had no backup to bring them back. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>One command deleted 42 pods, and I had no backup to bring them back.</h1>
+    <div class="caption">One command deleted 42 pods, and I had no backup. Most beginners think Kubernetes will just fix itself. It won't. Kubernetes disaster recovery starts with two habits: snapshot etcd on a schedule, and keep your manifests in git so you can rebuild a namespace in minutes. Your cluster state lives in etcd, so that's where your recovery plan starts. Takeaway: a backup you have never restored is only a hope. Which failure scares you most, a dead node or a deleted namespace? Comment 'DR' and I'll send the snapshot script.
+
+—
+@k8s.simplified · Kubernetes, one lesson at a time.
+
+"One command. Forty two pods, gone in under a minute. The cluster was fine, and then someone hit enter. Kubernetes disaster recovery comes down to three failures. I can reproduce all three on a practice cluster, and each one has a fix you can run today. First failure: etcd. It is the database behind your cluster. Every deployment, secret and service is stored there. If etcd dies with no snapshot, there is nothing to restore from. Take one with the etcd snapshot save command, and store the file off the node. Second failure: one node dies, and every pod on it dies too. Kubernetes waits about five minutes before it moves them to healthy nodes. Watch the node go not ready, then the pods reappear elsewhere. Third failure, and this is the scene from the start. Deleting a namespace removes every object inside it. No backup, no git history, no undo. The rule: keep your manifests in git, and keep etcd snapshots on a schedule. Recovery is a restore, not a rebuild from memory. Comment 'DR' and I will send you the snapshot script. Follow K8s Simplified for a new Kubernetes lesson every day."</div>
+    <section class="reply"><h2>DR</h2><div class="guide"><p>In this guide, you will learn how to handle the three most common Kubernetes disaster recovery scenarios: an etcd crash, a dead worker node, and an accidentally deleted namespace. Beginners often assume Kubernetes will magically rebuild everything on its own, but it cannot recover what it does not remember. By the end of this walkthrough, you will know how to back up your cluster state, simulate failures safely, and restore workloads in minutes.</p>
+<h3>Why this matters</h3>
+<p>Your cluster stores every single Deployment, Secret, ConfigMap, and Service inside <strong>etcd</strong>, a key-value store running on your control plane. If etcd is corrupted or a namespace is deleted, <code>kubectl</code> cannot help you unless you have an external backup or your YAML manifests committed to Git. Disaster recovery is not about hoping your nodes never fail; it is about having a tested command sequence ready before an outage happens.</p>
+<h3>Step 1: Back up the etcd database snapshot</h3>
+<p>Capture the current state of your cluster by creating an etcd snapshot using <code>etcdctl</code>. This creates a point-in-time copy of your cluster database that you can restore if the control plane fails or data is corrupted.</p>
+<pre data-lang="bash"><code>ETCDCTL_API=3 etcdctl snapshot save /tmp/etcd-backup.db \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="bash"><code>Snapshot saved at /tmp/etcd-backup.db</code></pre>
+<h3>Step 2: Verify the snapshot integrity</h3>
+<p>Inspect the snapshot file you just created to make sure the data is intact and readable before storing it in offsite storage. An unverified backup file is useless if it was corrupted mid-write.</p>
+<pre data-lang="bash"><code>ETCDCTL_API=3 etcdctl snapshot status /tmp/etcd-backup.db --write-out=table</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="bash"><code>+----------+----------+------------+------------+
+|   HASH   | REVISION | TOTAL KEYS | TOTAL SIZE |
++----------+----------+------------+------------+
+| 3f8b1a9c |     1420 |       1048 |     2.8 MB |
++----------+----------+------------+------------+</code></pre>
+<h3>Step 3: Simulate and observe a dead worker node</h3>
+<p>Simulate a node failure by draining a worker node to see how Kubernetes redistributes workloads to healthy nodes. When a node stops responding in production, Kubernetes waits for a timeout period (default 5 minutes) before evicting pods and scheduling them elsewhere.</p>
+<pre data-lang="bash"><code>kubectl drain node-02 --ignore-daemonsets --delete-emptydir-data --force</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="bash"><code>node/node-02 cordoned
+evicting pod default/web-7798b64b97-9kldx
+pod/web-7798b64b97-9kldx evicted
+node/node-02 drained</code></pre>
+<h3>Step 4: Accidental namespace deletion and Git-based recovery</h3>
+<p>Create a test namespace named <code>demo</code> running an <code>nginx:1.27</code> deployment, delete the namespace, and immediately bring it back using your declarative manifest file. Deleting a namespace permanently removes every resource inside it, meaning Git or etcd snapshots are your only recovery path.</p>
+<pre data-lang="bash"><code>kubectl create namespace demo
+kubectl create deployment web --image=nginx:1.27 -n demo
+kubectl delete namespace demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="bash"><code>namespace/demo created
+deployment.apps/web created
+namespace "demo" deleted</code></pre>
+<p>Now, re-apply the workload from your declarative YAML file to restore the entire namespace state instantly.</p>
+<pre data-lang="bash"><code>cat &lt;&lt;EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+EOF</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="bash"><code>namespace/demo created
+deployment.apps/web created</code></pre>
+<h3>Step 5: Verify the restored deployment</h3>
+<p>Confirm that your recovered pods are running cleanly in the restored namespace. Always check both pod status and ready counts to verify that recovery succeeded.</p>
+<pre data-lang="bash"><code>kubectl get pods -n demo -l app=web</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="bash"><code>NAME                   READY   STATUS    RESTARTS   AGE
+web-7798b64b97-j2b8w   1/1     Running   0          12s
+web-7798b64b97-xz9qp   1/1     Running   0          12s</code></pre>
+<h3>Common mistakes</h3>
+<ul><li>Storing the snapshot on the control plane node itself: When the control plane disk corrupts or terminates, the backup is destroyed with it. Fix: Copy <code>/tmp/etcd-backup.db</code> to object storage like AWS S3 or an isolated backup server immediately after generation.</li><li>Running <code>etcdctl</code> without API version 3: By default, older etcdctl binaries might use API version 2, producing an error like <code>client: etcd cluster is unavailable or misconfigured</code>. Fix: Always prefix your command with <code>ETCDCTL_API=3</code>.</li><li>Relying on imperative <code>kubectl create</code> commands during setup: If you build clusters with manual commands, you have no record to re-run when an entire namespace disappears. Fix: Store all configurations as YAML in a Git repository and deploy using <code>kubectl apply -f</code>.</li><li>Forgetting uncordon after node maintenance: Leaving a node cordoned prevents Kubernetes from scheduling replacement pods onto it. Fix: Run <code>kubectl uncordon node-02</code> as soon as the node is back online.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Save a point-in-time copy of your cluster database using <code>etcdctl snapshot save</code>.</li><li>Validate that your snapshot is not corrupted with <code>etcdctl snapshot status</code>.</li><li>Handle node maintenance safely using <code>kubectl drain</code> to evict workloads gracefully.</li><li>Keep all application manifests in Git so an accidentally deleted namespace can be recreated in seconds.</li><li>Verify application readiness with <code>kubectl get pods</code> after any recovery operation.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
