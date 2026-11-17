@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>I shared one 'secret' with 40 developers. It was never a secret. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>I shared one 'secret' with 40 developers. It was never a secret.</h1>
+    <div class="caption">I shared one 'secret' with 40 developers. It was never a secret.
+
+If you're setting up Kubernetes OIDC login with kubectl, there's one choice that matters: public client or confidential client. This video walks through why kubectl should be a public client, how PKCE protects the login, and the exact commands to set it up.
+
+Takeaway: if the app runs on someone's laptop, it's a public client. Don't hand out a secret you can't keep.
+
+Save this for your next cluster setup. Have you ever shared a secret you shouldn't have? Tell me below, and comment OIDC for a Keycloak follow-up.
+
+—
+@k8s.simplified · Kubernetes, simplified.
+
+"I once pasted a client secret into a shared kubeconfig and sent it to my whole team. That was the mistake. Let me show you why. If you log into Kubernetes with your company account, through Google, Okta, Keycloak or Microsoft, there is one setting that quietly decides whether that setup is safe. That setting is whether your login app is registered as a public client or a confidential client. Most beginners pick the wrong one, because confidential sounds safer. Here's the memorable version. For kubectl, use a public client. Not confidential. By the end of this video you'll know exactly why, and how to set it up. Why does this matter? Because shared admin certificates and shared kubeconfig files are how teams end up with no audit trail and no clean way to remove someone who leaves. Here's the plan. First, how Kubernetes thinks about identity. Then the two client types. Then a real walkthrough with commands, and finally the mistakes I see most often. First, something that surprised me when I was learning. Kubernetes has no user database. There is no place where you create a user called priya. Users simply don't exist as objects. So the API server has to trust someone else to say who you are. That someone is your identity provider, the same system that already handles your company email and logins. Think of an airport. The airline doesn't make your passport. The government issues it, and the gate agent only checks that it's real. The API server is the gate agent. The protocol for this is called OpenID Connect. You log in at the identity provider, and it hands you a signed token that says who you are and which groups you belong to. Three players are involved. You, the identity provider, and the Kubernetes API server. And a fourth one hiding in the middle: the client, which is the app asking for your login. Notice what the API server does with your token. It only checks the signature, the issuer, and who the token was meant for. It never talks to the client. Remember that. So who is the client when you run kubectl? It's kubectl, or a small plugin attached to it, running on your laptop. Not a website. Not a server. Your laptop. Now the two types. A confidential client can keep a secret. A public client cannot, and it doesn't pretend to. The question is simply: where does the app run? A web app running on your own server is confidential. The secret lives in server settings that users never see. Mobile apps and command line tools run on user devices, so they're public. Watch what happens if you make kubectl confidential. The secret has to go into the kubeconfig. Now that file gets copied to every laptop, every wiki page, every chat message. That was me. I put the secret in a kubeconfig, shared it in a team channel, and felt proud of how easy onboarding was. Three months later a contractor's laptop was lost. I had to rotate the secret and break login for every single developer on the same afternoon. A secret that forty people hold is not a secret. It's just a shared password. So a public client has no secret at all. Fair question: then what stops someone from stealing the login code halfway through and using it? That's where PKCE comes in. PKCE stands for Proof Key for Code Exchange. Before login, kubectl invents a random one-time value and sends only its fingerprint. After login, it must show the original value to claim the token. If an attacker steals the login code in the middle, it's useless to them. They never saw the original random value, so the identity provider refuses to hand over a token. So the protection comes from a one-time proof generated on each login, not from a secret that sits in a file. That's safer for something that lives on a laptop. Now the walkthrough. On the cluster side, the API server needs a few settings. Let's look at them in the control plane configuration of a test cluster. You need the issuer address, a client ID, which claim to use as the username, and which claim holds groups. Notice there is no client secret setting anywhere. It was never needed. On the identity provider side, create a client called kubernetes. Find the toggle called client authentication, or something similar, and switch it off. Off means public. Then add a redirect address pointing to localhost. The kubectl plugin starts a tiny web server on your laptop, and the browser sends you back to it after login. One more step that people forget. Add a mapper so the token includes a groups claim. Without it, your login works, but Kubernetes has no idea which team you're in. On your laptop, install the login plugin using krew, the kubectl plugin manager. It's a small helper that handles the browser login and caches your token. Now run the plugin's setup command. It walks you through the login, opens your browser, and shows you exactly what is inside your token. Notice we pass no secret. Here is what just happened. The plugin opened your browser, you logged in, the identity provider redirected back to localhost with a code, and the plugin traded that code for a token. Next, tell kubectl to use that plugin as a user. This command creates a user entry in your kubeconfig. Read it closely, and you'll see the issuer and client ID, but no secret. Now point your current context at that new user, so every kubectl command goes through the login flow from now on. Let's try it. Your browser may open for login, and then the command comes back with an error. Forbidden. Don't panic, this is actually good news. Forbidden means the cluster knows who you are, but hasn't been told what you're allowed to do. Authentication is who you are. Authorization is what you can do. Two separate steps. To see what the cluster thinks of you, ask it directly. This shows the username and groups it read from your token. Now grant access to a group, not a person. This binds the built-in view role to everyone in the devops team group. The prefix matches the one set on the API server. Run the same command again. This time it works, because your group now has read access. Same login, new permission. And to confirm we didn't hand out too much, ask whether you can delete nodes. The answer should be no. View means view. One more benefit. The token expires quickly, often within minutes. When it does, the plugin quietly uses a refresh token to get a new one, so you rarely notice. Compare that to an admin certificate that's valid for a year and sits in a file forever. Short-lived tokens mean a stolen laptop is a small problem, not a disaster. And offboarding becomes boring, which is what you want. Remove someone from the group at the identity provider, and once their token expires, their cluster access disappears with it. Now the common mistakes. Mistake one: marking the client as confidential and putting the secret in the kubeconfig. If it's on a laptop, assume everyone can read it. Mistake two: a mismatch. The client ID in the API server settings must match the token's audience exactly, and the groups claim name must match too. One typo and every login fails. Mistake three: some providers, Google being the famous one, insist on a client secret even for desktop apps. If you're stuck with that, treat it as public information, not protection. Quick recap. Kubernetes has no user database, so it trusts an identity provider. kubectl runs on your laptop, and anything on a laptop can't keep a secret. That's why you register it as a public client and let PKCE protect each login. The API server only verifies tokens. Groups in the token, plus role bindings, decide what you can do. If you remember one sentence, make it this. If the app runs on someone's laptop, it's a public client. Don't hand out a secret you can't keep. Have you ever shared a secret you shouldn't have? Tell me your story in the comments, and type OIDC if you want a follow-up on setting this up with Keycloak. Follow K8s Simplified for a new Kubernetes lesson every day."</div>
+    
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
