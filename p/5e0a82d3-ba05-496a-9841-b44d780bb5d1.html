@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>My pod sat in Pending for 40 minutes and I restarted everything except the one thing that would've told me why. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>My pod sat in Pending for 40 minutes and I restarted everything except the one thing that would've told me why.</h1>
+    <div class="caption">A pod stuck in Pending cost me 40 minutes, and the answer was one scroll away.
+
+If your Kubernetes pod is stuck in Pending, run kubectl describe pod and read the Events section at the bottom. The scheduler tells you exactly why: insufficient CPU, an unbound volume, a node taint. No guessing, no restarting things at random.
+
+Takeaway: Pending is not an error. It is the scheduler waiting, and Events tells you what it is waiting for.
+
+Save this for your next stuck pod. Comment 'PENDING' and I'll send you the 5 most common reasons. What was the weirdest Pending reason you've hit?
+
+—
+@k8s.simplified · Kubernetes, without the jargon.
+
+"Your pod says Pending. It has said Pending for ten minutes. And you have no idea why. My first month, I did what everyone does. Deleted the pod, restarted the deployment, even bounced a node. Forty minutes gone, and nothing changed. Here is the trap. When you list your pods, the status column tells you what is happening, but never why. So run the describe command on that pod. It prints a wall of text. Ignore almost all of it and scroll straight to the very bottom. That Events section is the scheduler talking. It checks every node, one by one, and writes down why each one said no. Zero of three nodes are available, three have insufficient CPU. That is your whole answer, in one line. Next pod, different reason. This time the event says the pod has an unbound persistent volume claim. Nothing wrong with CPU. The storage was never attached. Restarting would never have found that. So the rule is simple. Describe first, guess never. Comment the word PENDING and I will send you the five most common reasons. Follow K8s Simplified for a new Kubernetes lesson every day."</div>
+    <section class="reply"><h2>PENDING</h2><div class="guide"><p>By the end of this guide you will be able to take any pod stuck in <code>Pending</code>, find the exact reason the scheduler gave, and fix it without restarting anything at random. We will reproduce a real stuck pod, read its Events, and fix it.</p>
+<p>This matters because <strong>Pending is not an error</strong>. It means the scheduler has not placed your pod on a node yet, and it records exactly why. Reading that one line saves you from the 40-minute restart spiral.</p>
+<h3>Why this matters</h3>
+<p>When you run <code>kubectl get pods</code>, the STATUS column tells you what is happening, but never why. Deleting pods, restarting deployments and bouncing nodes changes nothing, because the cause is almost always a scheduling constraint: not enough CPU or memory, a volume that is not bound, or a node taint. The scheduler writes that reason into the pod's Events. Your job is to read it.</p>
+<h3>Step 1: Create a pod that cannot be scheduled</h3>
+<p>First we make the problem on purpose. This deployment called <code>web</code> asks for far more CPU than a small cluster has, so the scheduler cannot place it. Save it as <code>web.yaml</code> and apply it in the <code>demo</code> namespace.</p>
+<pre data-lang="bash"><code>kubectl create namespace demo
+cat &lt;&lt;'EOF' &gt; web.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        resources:
+          requests:
+            cpu: "64"
+EOF
+kubectl apply -f web.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>namespace/demo created
+deployment.apps/web created</code></pre>
+<h3>Step 2: See the status, and notice what it does not say</h3>
+<p>List the pods. This is where most people get stuck, because the output shows the state but gives no reason.</p>
+<pre data-lang="bash"><code>kubectl get pods -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>NAME                   READY   STATUS    RESTARTS   AGE
+web-6d8f7c9b5d-x2k4q   0/1     Pending   0          2m</code></pre>
+<p><code>Pending</code> with zero restarts means the container never started. Nothing crashed. The pod is waiting to be placed on a node.</p>
+<h3>Step 3: Describe the pod and scroll to the bottom</h3>
+<p>Run <code>kubectl describe pod</code> on the pod name from Step 2. It prints a long wall of text. Ignore almost all of it and go straight to the last section, <strong>Events</strong>. Your pod name will differ, so replace <code>web-6d8f7c9b5d-x2k4q</code> with the name you saw.</p>
+<pre data-lang="bash"><code>kubectl describe pod web-6d8f7c9b5d-x2k4q -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>...
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  2m    default-scheduler  0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod.</code></pre>
+<p>This is the scheduler talking. It checked all three nodes and each one said no because of CPU. That is your whole answer in one line.</p>
+<h3>Step 4: Fix the cause the event named</h3>
+<p>The event said CPU, so we lower the request to something reasonable. Use <code>kubectl set resources</code> to change it on the deployment. A new pod is created and the old one is replaced.</p>
+<pre data-lang="bash"><code>kubectl set resources deployment web -n demo --requests=cpu=100m
+kubectl get pods -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>deployment.apps/web resource requests updated
+NAME                   READY   STATUS    RESTARTS   AGE
+web-7c5b9d6f84-m8wzp   1/1     Running   0          12s</code></pre>
+<h3>Step 5: Learn to read other Pending reasons</h3>
+<p>The Events message changes with the cause, and the cause tells you where to look. Here is a pod blocked by storage. Nothing is wrong with CPU, the claim was never bound.</p>
+<pre data-lang="bash"><code>kubectl get events -n demo --field-selector reason=FailedScheduling</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>LAST SEEN   TYPE      REASON             OBJECT          MESSAGE
+8s          Warning   FailedScheduling   pod/web-data    0/3 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.</code></pre>
+<p>Common messages and what they mean:</p>
+<ul><li><code>Insufficient cpu</code> or <code>Insufficient memory</code>: requests are larger than any node can offer.</li><li><code>unbound immediate PersistentVolumeClaims</code>: check <code>kubectl get pvc -n demo</code>.</li><li><code>node(s) had untolerated taint</code>: the pod needs a matching toleration or a different node.</li><li><code>didn't match Pod's node affinity/selector</code>: your <code>nodeSelector</code> or affinity matches no node.</li></ul>
+<h3>Common mistakes</h3>
+<ul><li>Restarting or deleting the pod first. Symptom: it comes back as Pending with the same age reset. Fix: run <code>kubectl describe pod</code> and read Events before touching anything.</li><li>Reading the top of the describe output. Symptom: pages of fields and no answer. Fix: scroll to the bottom, the Events section holds the reason.</li><li>Looking at logs. Symptom: <code>kubectl logs</code> returns nothing or an error. Fix: a Pending pod has no container yet, so there are no logs. Use Events.</li><li>Describing the deployment instead of the pod. Symptom: no FailedScheduling message. Fix: describe the pod itself, the scheduler writes events against it.</li><li>Forgetting the namespace. Symptom: <code>NotFound</code> errors. Fix: add <code>-n demo</code> to every command.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Create the <code>web</code> deployment whose pod cannot be scheduled.</li><li>Run <code>kubectl get pods -n demo</code> and see Pending without a reason.</li><li>Run <code>kubectl describe pod</code> and read the Events section at the bottom.</li><li>Fix exactly what the event names, here CPU requests.</li><li>Use the message to recognise other causes: storage, taints and selectors.</li></ol>
+<p>Describe first, guess never.</p></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
