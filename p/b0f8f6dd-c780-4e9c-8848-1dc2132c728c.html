@@ -1,0 +1,331 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Part 17: every Kubernetes manifest has the same four top-level parts: apiVersion, kind, metadata and spec. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>Part 17: every Kubernetes manifest has the same four top-level parts: apiVersion, kind, metadata and spec.</h1>
+    <div class="caption">Part 17: every Kubernetes manifest has the same four parts, and I wish someone had told me this on day one.
+
+Reading Kubernetes YAML looks scary until you spot apiVersion, kind, metadata and spec. Those four top-level parts are in every manifest, whatever you are creating.
+
+Once you know them, any YAML is readable: apiVersion is the API version, kind is the type of object, metadata is the name and identity, spec is what you want.
+
+Save this for the next time a long YAML file freezes you. Comment 'YAML' if you want a cheat sheet. Which of the four parts confused you most?
+
+—
+@k8s.simplified · Kubernetes, without the jargon</div>
+    <section class="reply"><h2>YAML</h2><div class="guide"><p>By the end of this guide you will be able to open any Kubernetes YAML file, find its four top-level parts, and explain what it will create. You will also write, apply, and inspect a small manifest yourself. This matters because long manifests stop looking scary once you know where to look.</p>
+<h3>Why this matters</h3>
+<p>A <strong>manifest</strong> is a YAML file that describes something you want Kubernetes to create. Every manifest, whether it makes a Namespace, a Pod or a Deployment, starts with the same four top-level parts: <code>apiVersion</code>, <code>kind</code>, <code>metadata</code> and <code>spec</code>.</p>
+<p>When you meet a 200-line file, you do not read it line by line. You scan the left edge, find those four words, and treat everything indented underneath as belonging to the part above it. That one habit makes unfamiliar YAML readable.</p>
+<h3>Step 1: Write a manifest and spot the four parts</h3>
+<p>First, create a file called <code>namespace.yaml</code>. A Namespace is a named section of your cluster, and it is the simplest object to start with. We use it to see the four parts in their smallest form.</p>
+<pre data-lang="yaml"><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo</code></pre>
+<p>Save it, then print it back to check it:</p>
+<pre data-lang="bash"><code>cat namespace.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo</code></pre>
+<p>Notice there are only three parts here. Some kinds, like Namespace, can be created without a <code>spec</code>, and Kubernetes fills in the defaults. Most objects you will meet do have one, as you will see in Step 4.</p>
+<h3>Step 2: Read apiVersion and kind</h3>
+<p><code>apiVersion</code> says which version of the Kubernetes API you are using to create the object. Many basic objects, such as Namespace, Pod and Service, simply use <code>v1</code>. Deployments use <code>apps/v1</code>, because they belong to the <code>apps</code> API group.</p>
+<p><code>kind</code> is the type of object you want. Change the kind and you change what gets created. You can ask your cluster which kinds it knows about and which version each uses:</p>
+<pre data-lang="bash"><code>kubectl api-resources | grep -E "^(namespaces|pods|deployments) "</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>namespaces                        ns           v1                                     false        Namespace
+pods                              po           v1                                     true         Pod
+deployments                       deploy       apps/v1                                true         Deployment</code></pre>
+<p>Look at the version column. It tells you what to write in <code>apiVersion</code>, and the last column is the exact spelling for <code>kind</code>.</p>
+<h3>Step 3: Add metadata and apply it</h3>
+<p><code>metadata</code> is the identity card of the object. It holds the <code>name</code> and, for namespaced objects, optionally a <code>namespace</code>. Kubernetes also gives every object its own unique ID, which you do not write yourself. Apply the manifest to create the namespace:</p>
+<pre data-lang="bash"><code>kubectl apply -f namespace.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>namespace/demo created</code></pre>
+<p>Now look at what Kubernetes stored. You will see the name you chose, plus fields Kubernetes added, including the <code>uid</code>:</p>
+<pre data-lang="bash"><code>kubectl get namespace demo -o yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: "2026-11-27T10:15:42Z"
+  labels:
+    kubernetes.io/metadata.name: demo
+  name: demo
+  resourceVersion: "5821"
+  uid: 3f6c1a52-8d7e-4b0a-9c1e-2a7d5e4b9f10
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active</code></pre>
+<p>Your timestamp and <code>uid</code> will differ. Notice that Kubernetes added a <code>spec</code> and a <code>status</code> of its own. You wrote the desired state, and Kubernetes reports the current state.</p>
+<h3>Step 4: Write a spec for something that runs a container</h3>
+<p><code>spec</code> is what you want, written as the desired state. Every kind has its own spec fields. For a Pod, the spec holds the list of containers and their image names. Create <code>pod.yaml</code>:</p>
+<pre data-lang="yaml"><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: demo
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27</code></pre>
+<p>Apply it:</p>
+<pre data-lang="bash"><code>kubectl apply -f pod.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>pod/web created</code></pre>
+<p>Check that it is running in the <code>demo</code> namespace:</p>
+<pre data-lang="bash"><code>kubectl get pods -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>NAME   READY   STATUS    RESTARTS   AGE
+web    1/1     Running   0          12s</code></pre>
+<p>The first run may show <code>ContainerCreating</code> while the image downloads. Wait a few seconds and run it again.</p>
+<h3>Step 5: Use the left-edge scan on any file</h3>
+<p>Now practise the habit. Look at <code>pod.yaml</code> and read only the lines that start at the far left. You get <code>apiVersion</code>, <code>kind</code>, <code>metadata</code> and <code>spec</code>. Everything indented belongs to the part above it. You can do this with a quick command:</p>
+<pre data-lang="bash"><code>grep -E "^[a-zA-Z]" pod.yaml</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>apiVersion: v1
+kind: Pod
+metadata:
+spec:</code></pre>
+<p>Read it aloud: a version one Pod, with an identity, and a desired state. If you can say that, you can read the file.</p>
+<h3>Common mistakes</h3>
+<ul><li><strong>Wrong indentation.</strong> Symptom: an error like <code>error converting YAML to JSON</code> or a field that is silently ignored. Fix: use spaces, never tabs, and indent children consistently by two spaces under their parent.</li><li><strong>Wrong apiVersion for the kind.</strong> Symptom: <code>no matches for kind "Deployment" in version "v1"</code>. Fix: run <code>kubectl api-resources</code> and use the version shown for that kind, such as <code>apps/v1</code>.</li><li><strong>Wrong capitalisation of kind.</strong> Symptom: <code>no matches for kind "pod"</code>. Fix: write kinds exactly as shown, for example <code>Pod</code>, not <code>pod</code>.</li><li><strong>Putting spec fields under metadata.</strong> Symptom: an unknown field error, or an object with no containers. Fix: check that <code>spec:</code> sits at the left edge, not indented under <code>metadata:</code>.</li><li><strong>Applying into a namespace that does not exist.</strong> Symptom: <code>namespaces "demo" not found</code>. Fix: create the namespace first with <code>kubectl apply -f namespace.yaml</code>.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Write a minimal manifest and find its top-level parts.</li><li>Set <code>apiVersion</code> and <code>kind</code>, and check them with <code>kubectl api-resources</code>.</li><li>Add <code>metadata</code> with a name, apply it, and see the <code>uid</code> Kubernetes adds.</li><li>Write a <code>spec</code> with the desired state, such as the <code>nginx:1.27</code> image.</li><li>Scan the left edge to read any manifest quickly.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
