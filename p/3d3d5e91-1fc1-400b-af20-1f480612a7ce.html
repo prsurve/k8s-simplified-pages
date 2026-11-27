@@ -1,0 +1,320 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Three years ago I took down a production app with a spreadsheet and an SSH session. Nobody was paged, because nothing was counting. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">concept</div>
+    <h1>Three years ago I took down a production app with a spreadsheet and an SSH session. Nobody was paged, because nothing was counting.</h1>
+    <div class="caption">Three years ago my production app went down at 3 AM, and nothing noticed for forty minutes. That's the Kubernetes story behind what is Kubernetes.
+Kubernetes is software that manages your containers for you, takes a group of machines, and decides where each container runs.
+This is Part 1 of the k8s from zero series, so no prior knowledge needed. We rebuild the sentence from my spreadsheet disaster, with real kubectl commands on screen.
+Takeaway: containers are the boxes. Kubernetes is the manager that keeps the count and places them.
+Which job would you hand to Kubernetes first? Comment 'PART 2' and I'll read every reply.
+—
+@k8s.simplified · Kubernetes, without the jargon.
+
+"Three years ago I took down a production app with a spreadsheet and an SSH session. Nobody got paged, because nothing was counting. My job that quarter was keeping our web app alive on five servers. I copied a container onto each one by hand. The record of who ran where lived in a spreadsheet. Five rows, checked every morning with a cup of tea. Here is the sentence this whole video builds. Kubernetes is software that manages your containers for you, takes a group of machines, and decides where each container runs. I did not know that sentence back then. I only knew the spreadsheet kept growing and my tea kept going cold. Then came the Tuesday it broke. At 3 AM, one of the five servers died quietly, and the spreadsheet still said it was fine. No alert fired, because no software was counting copies. The app ran on four servers for almost forty minutes before an angry message told me. Look at what happened. A machine dropped out, its copy vanished, and nothing replaced it, because nobody was watching the count. My fix at 3:40 AM was ugly. I moved a copy to a free server by hand, then promised myself I would never do that again. That night I realised the containers were never the problem. They were fine. The problem was that I was the only manager. A container is a sealed box with your app and its settings inside. It is excellent packaging, and it decides absolutely nothing. So what would a good manager do? Three things. Keep a count, pick a machine with room, and replace anything that goes missing. Keep a count, pick a fit, replace what is missing. That is the core job, and it sits right in the middle of our one sentence. Let us rebuild the sentence piece by piece, the way I wish someone had explained it to me on that Tuesday. Piece one is software. Not a magic dashboard. It is a program you run, and it keeps running, watching your apps for you. Piece two is containers. These are the things it manages, the sealed boxes holding your app and everything it needs. Piece three is a group of machines. You hand Kubernetes a pool of computers, and that pool is the room it has to work with. Each machine has CPU, which is processing power, and memory, which is working space. Together, that is the room on offer. Piece four is the decision. For each copy, Kubernetes checks what that copy asks for, then picks a machine that can actually hold it. If a container asks for more memory than any machine has free, it cannot be placed at all. No room, no placement. Notice what you do not do here. You say what you want, and you never say which machine should run it. Pause and check the sentence. Software, containers, machines, decisions. Four pieces, and each one has a job. Watch the copies move. Each one slides onto a machine with free room, instead of piling onto the same server. Now the hands-on part. You will watch the four pieces work together, one command at a time, in a live demo. The setup is a small group of machines already running off camera. We only use that group to place copies. The first command asks Kubernetes to create a deployment called web, from the nginx image, with three copies. Press enter. That one line is the whole request. A name, an image, and how many copies you want running. Kubernetes accepts it and works out where each copy should live. I never picked a machine myself. Each copy shows up as a Pod, a small wrapper around one container. Think of it as the unit Kubernetes places. Three copies enter the group. They spread out, so no single machine holds all of them at once. This command lists the Pods. Three copies, each with a generated name, and you typed none of those names yourself. Here is the detail my spreadsheet could never give me. Spread copies mean one dead machine costs you one copy, not the app. That 3 AM outage was really a count problem. Nobody was checking the number, so the gap sat there for forty minutes. The manager sees three copies, expects three, and acts the moment that stops being true. That is the whole loop. Now traffic climbs, and we need five copies. You want more capacity without touching a single machine. Ask for more with one command. Change the number of replicas, and let Kubernetes find room for the new copies. The count goes from three to five. Two new copies find room, and nobody opens a spreadsheet. Here is that command. You changed a number, and the platform did the moving. That gap is the whole value. Run the list again. Five Pods, spread across the group, and not one placement decision made by hand. Now the failure I want you to remember. I will delete one Pod on purpose, the same way a dead machine removes a copy. Do not do this casually in production. Here it is a lab, and we are testing whether the count gets repaired. Delete one copy. The name here comes from my lab, so yours will differ, and that is completely fine. Check the list. The deleted copy is gone, but a replacement is already running, so the count is back to five. Same mechanism as my 3 AM story. Something went missing, so the manager puts a fresh copy in its place. This is what I wish I had on that Tuesday. Nobody had to stay awake for the count to stay correct. Recap, the way I would tell it to a junior engineer over coffee. Kubernetes is software that manages your containers for you. It takes a group of machines, and it decides where each container runs. Software, containers, machines, decisions. If you can say that sentence without notes, you have the foundation. Every later part in this series builds on it. Your homework is simple. Name one thing you check by hand every day, and ask who would check it while you sleep. Comment 'PART 2' and tell me the first job you would hand to Kubernetes. I read every reply. Follow K8s Simplified for a new Kubernetes lesson every day."</div>
+    <section class="reply"><h2>PART 2</h2><div class="guide"><p>This guide shows you how to ask Kubernetes for a set of containers, change how many run, and watch it repair the count when one disappears. By the end, you will have run a small web app across a group of machines without choosing any machine yourself, which is the job I did by hand with a spreadsheet.</p>
+<h3>Step 1: Create a namespace and a deployment</h3>
+<p>First, make a separate area in the cluster called <code>demo</code> so the lab stays tidy. Then describe your desired state in a file: a deployment named <code>web</code>, using the <code>nginx:1.27</code> image, with three copies. A deployment is the object that keeps a count of your containers for you.</p>
+<pre data-lang="bash"><code>kubectl create namespace demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>namespace/demo created</code></pre>
+<p>Next, save this manifest as <code>web.yaml</code>. It says what you want, and it says nothing about which machine should run each copy.</p>
+<pre data-lang="yaml"><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27</code></pre>
+<p>Apply it, then list the Pods. Each copy runs as a <strong>Pod</strong>, a small wrapper around one container, and Kubernetes places each Pod on a node with room.</p>
+<pre data-lang="bash"><code>kubectl apply -f web.yaml
+kubectl get pods -n demo -o wide</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>deployment.apps/web created
+NAME                   READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+web-6f9c7b8d4-2kq7m    1/1     Running   0          12s   10.244.1.5    node-1     &lt;none&gt;           &lt;none&gt;
+web-6f9c7b8d4-8vx4t    1/1     Running   0          12s   10.244.2.7    node-2     &lt;none&gt;           &lt;none&gt;
+web-6f9c7b8d4-rn5zl    1/1     Running   0          12s   10.244.3.4    node-3     &lt;none&gt;           &lt;none&gt;</code></pre>
+<p>Notice the spread. The <code>NODE</code> column shows three different machines, so no single machine holds the whole app. You typed none of those generated names.</p>
+<h3>Step 2: Scale up by changing one number</h3>
+<p>Traffic is climbing, so you need five copies. Instead of copying containers onto servers, change the replica count and let Kubernetes find room for the new Pods. The <code>scale</code> command is the quickest way to do this.</p>
+<pre data-lang="bash"><code>kubectl scale deployment web --replicas=5 -n demo
+kubectl get pods -n demo -o wide</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>deployment.apps/web scaled
+NAME                   READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+web-6f9c7b8d4-2kq7m    1/1     Running   0          2m    10.244.1.5    node-1     &lt;none&gt;           &lt;none&gt;
+web-6f9c7b8d4-8vx4t    1/1     Running   0          2m    10.244.2.7    node-2     &lt;none&gt;           &lt;none&gt;
+web-6f9c7b8d4-rn5zl    1/1     Running   0          2m    10.244.3.4    node-3     &lt;none&gt;           &lt;none&gt;
+web-6f9c7b8d4-hd8bq    1/1     Running   0          8s    10.244.1.6    node-1     &lt;none&gt;           &lt;none&gt;
+web-6f9c7b8d4-p2wlf    1/1     Running   0          8s    10.244.2.8    node-2     &lt;none&gt;           &lt;none&gt;</code></pre>
+<p>Two new Pods appeared, and you did not open a spreadsheet or log into a server. You changed a number, and the platform did the placing.</p>
+<h3>Step 3: Delete a Pod and watch the count repair itself</h3>
+<p>This is the failure that caused my 3 AM outage: a copy disappears. In a lab, you can simulate it by deleting one Pod on purpose. Do not do this casually in production. Start by listing the Pods so you can pick a name.</p>
+<pre data-lang="bash"><code>kubectl get pods -n demo
+kubectl delete pod web-6f9c7b8d4-2kq7m -n demo
+kubectl get pods -n demo</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang=""><code>NAME                   READY   STATUS    RESTARTS   AGE
+web-6f9c7b8d4-2kq7m    1/1     Running   0          4m
+web-6f9c7b8d4-8vx4t    1/1     Running   0          4m
+web-6f9c7b8d4-rn5zl    1/1     Running   0          4m
+web-6f9c7b8d4-hd8bq    1/1     Running   0          2m
+web-6f9c7b8d4-p2wlf    1/1     Running   0          2m
+pod "web-6f9c7b8d4-2kq7m" deleted
+NAME                   READY   STATUS              RESTARTS   AGE
+web-6f9c7b8d4-8vx4t    1/1     Running             0          4m
+web-6f9c7b8d4-rn5zl    1/1     Running             0          4m
+web-6f9c7b8d4-hd8bq    1/1     Running             0          2m
+web-6f9c7b8d4-p2wlf    1/1     Running             0          2m
+web-6f9c7b8d4-j7sxn    0/1     ContainerCreating   0          1s</code></pre>
+<p>The name <code>web-6f9c7b8d4-2kq7m</code> comes from my lab, so yours will differ. Replace it with any name from your own list. The deleted Pod is gone, and a replacement with a new name is already starting. Run the list again after a few seconds and you should see five <code>Running</code> Pods once more.</p>
+<h3>Why this matters</h3>
+<p>My outage was a count problem. A machine dropped out, its copy vanished, and nothing noticed for forty minutes because nothing was checking the number. A deployment does that check continuously. It compares the count you asked for with what is actually running, and it acts when they differ. The three commands you just ran show the whole loop: declare the count, let the platform place it, and let the platform repair it.</p>
+<h3>Common mistakes</h3>
+<ul><li><strong>Forgetting the namespace.</strong> You run <code>kubectl get pods</code> and see <code>No resources found</code>. The symptom is that your Pods exist but are invisible to the command. The fix is to add <code>-n demo</code> to every command in this guide.</li><li><strong>Editing the Pod instead of the deployment.</strong> You change a Pod's setting, but the Pod is replaced the moment it is deleted, so the change vanishes. The fix is to change the deployment, either in <code>web.yaml</code> followed by <code>kubectl apply -f web.yaml</code>, or with <code>kubectl scale</code>.</li><li><strong>Expecting a deleted Pod to stay gone.</strong> You delete a Pod and think you broke the app, then the count is back to normal. The symptom is a new Pod with a new name. This is expected behaviour. The fix is to check the replica count with <code>kubectl get deployment web -n demo</code>, not individual Pod names.</li><li><strong>Asking for more copies than the machines can hold.</strong> Pods sit in <code>Pending</code> forever. The symptom appears in <code>kubectl get pods</code> as <code>STATUS Pending</code>. The fix is to free up room on the nodes or request less memory per container, then check again with <code>kubectl describe pod &lt;pod-name&gt; -n demo</code> to read the scheduling reason.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Create a namespace with <code>kubectl create namespace demo</code>.</li><li>Describe the deployment <code>web</code> in <code>web.yaml</code>, with image <code>nginx:1.27</code> and three replicas.</li><li>Apply it with <code>kubectl apply -f web.yaml</code> and check the Pods with <code>kubectl get pods -n demo -o wide</code>.</li><li>Scale to five with <code>kubectl scale deployment web --replicas=5 -n demo</code>.</li><li>Delete one Pod and confirm that Kubernetes starts a replacement and restores the count to five.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
