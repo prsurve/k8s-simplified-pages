@@ -1,0 +1,362 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Part 18: kubectl explain pod.spec shows every field and what it does, so you never have to guess a field name. — k8s.simplified</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "66af49ec83cf460a8d25e775241ca0b6"}'></script> <!-- notsecret: public Cloudflare Web Analytics site token, not a credential -->
+<!-- End Cloudflare Web Analytics -->
+<style>
+  /*
+   * Public, unlisted per-post article page -- see
+   * automation/src/publish/knowledgeBase.ts. Deliberately has no nav, no
+   * "more posts" links, no index: each page is only ever reached via a
+   * direct link (its URL is the post's UUID), by design, so a visitor
+   * can't browse into other topics' content. MANUAL SYNC NOTE: same as
+   * render-templates/slide.html -- if the interactive tools' locked design
+   * system changes, this file must be updated by hand to match.
+   */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0D1117;
+    color: #E6EDF3;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6E7681;
+    font-size: 15px;
+    margin-bottom: 48px;
+  }
+  .brand .dot {
+    width: 12px;
+    height: 12px;
+    background: #326CE5;
+    flex: none;
+  }
+  .page.mark-cursor .accent { display: none; }
+  .page.mark-cursor .brand .dot { width: 10px; height: 18px; }
+  .accent {
+    width: 56px;
+    height: 6px;
+    background: #326CE5;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-size: 16px;
+    color: #85B7EB;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    margin: 0 0 32px;
+  }
+  .caption {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    white-space: pre-line;
+    margin-bottom: 48px;
+  }
+  .reply {
+    border-top: 1px solid #21262D;
+    padding-top: 32px;
+    margin-top: 32px;
+  }
+  .reply h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #85B7EB;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .guide p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #E6EDF3;
+    margin: 0 0 18px;
+  }
+  .guide h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+    margin: 40px 0 14px;
+    padding-left: 14px;
+    border-left: 4px solid #326CE5;
+  }
+  .guide ul, .guide ol {
+    margin: 0 0 22px;
+    padding-left: 26px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .guide li { margin-bottom: 8px; }
+  .guide li::marker { color: #85B7EB; }
+  .guide strong { color: #FFFFFF; font-weight: 700; }
+  .guide code {
+    background: #161B22;
+    color: #85B7EB;
+    padding: 2px 6px;
+    font-size: 0.92em;
+  }
+  .guide pre {
+    background: #161B22;
+    border: 1px solid #21262D;
+    border-left: 3px solid #326CE5;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .guide pre code {
+    background: none;
+    padding: 0;
+    color: #E6EDF3;
+    font-size: inherit;
+  }
+  .guide p.label {
+    font-size: 13px;
+    color: #6E7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -8px 0 8px;
+  }
+  .handle-wrap {
+    position: relative;
+    margin-top: 64px;
+  }
+  .handle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #6E7681;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .handle-btn:hover, .handle-btn[aria-expanded="true"] {
+    color: #85B7EB;
+  }
+  .handle-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #161B22;
+    border: 1px solid #21262D;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Higher specificity than .handle-menu's own `display: flex` above --
+     without this, the [hidden] attribute's default UA display:none loses
+     to the class rule and the popup shows open on every page load. */
+  .handle-menu[hidden] {
+    display: none;
+  }
+  .handle-menu a {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #E6EDF3;
+    text-decoration: none;
+  }
+  .handle-menu a:hover {
+    background: #21262D;
+    color: #85B7EB;
+  }
+</style>
+</head>
+<body>
+  <!--
+    Content is templated in by
+    automation/src/publish/knowledgeBase.ts's buildArticleHtml(), reusing
+    the double-curly-brace string-replace pattern from renderSlides.ts. Do
+    NOT write an actual placeholder token (open-brace open-brace NAME
+    close-brace close-brace) anywhere in this comment -- fillTemplate does
+    a blind replaceAll, so a placeholder mentioned here for documentation
+    gets substituted too, not just the real one below (bit us once: the
+    REPLIES fragment was tripled into this very comment).
+    Placeholders below: BRAND_LABEL, SOCIAL_LINKS, theme values (see render/brandTheme.ts),
+    TITLE, KICKER, CAPTION, REPLIES (a pre-built HTML
+    fragment, not plain text -- escaping happens at the call site before
+    assembly, not here), HANDLE.
+  -->
+  <div class="page mark-bar">
+    <div class="brand"><span class="dot"></span><span>k8s.simplified</span></div>
+    <div class="accent"></div>
+    <div class="kicker">practical</div>
+    <h1>Part 18: kubectl explain pod.spec shows every field and what it does, so you never have to guess a field name.</h1>
+    <div class="caption">Part 18: stop guessing Kubernetes field names. Your terminal already has the docs.
+
+kubectl explain is documentation built into your terminal. Run kubectl explain pod.spec and you get every field under spec, its type, and a plain description of what it does. Add another dot, like pod.spec.containers, to go one level deeper.
+
+Takeaway: kubectl explain pod.spec shows every field and what it does, so you never have to guess a field name.
+
+Save this for the next time you stare at a YAML file and wonder what a field is called. Comment 'EXPLAIN' and tell me which field you want decoded first. Next up is Part 19: Your first Pod with kubectl run, so follow to catch it.
+
+—
+@k8s.simplified · Kubernetes, from zero</div>
+    <section class="reply"><h2>EXPLAIN</h2><div class="guide"><p>Staring at a blank YAML file and guessing whether a field is called <code>envVars</code>, <code>environment</code>, or <code>env</code> wastes hours. By the end of this guide, you will be able to query the exact structure, data type, and requirements of any Kubernetes object directly from your terminal. You will never need to open a web browser to check API documentation again.</p>
+<h3>Why this matters</h3>
+<p>The Kubernetes API contains thousands of fields across dozens of resources. Field names are strict, case-sensitive, and change depending on which API version you target. Browsing online documentation often pulls up documentation for the wrong version of Kubernetes. <code>kubectl explain</code> reads OpenAPI schemas directly from the cluster you are currently connected to, giving you accurate, version-matched documentation instantly.</p>
+<h3>Step 1: Inspect a top-level resource</h3>
+<p>Run <code>kubectl explain</code> on a resource name to see its group, version, description, and top-level fields. This confirms how the resource is identified in the cluster and lists its primary sections.</p>
+<pre data-lang="bash"><code>kubectl explain pod</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>KIND:       Pod
+VERSION:    v1
+
+DESCRIPTION:
+    Pod is a collection of containers that can run on a host. This resource is
+    created by clients and scheduled onto hosts.
+
+FIELDS:
+    apiVersion	&lt;string&gt;
+        APIVersion defines the versioned schema of this representation of an
+        object.
+
+    kind	&lt;string&gt;
+        Kind is a string value representing the REST resource this object
+        represents.
+
+    metadata	&lt;Object&gt;
+        Standard object's metadata.
+
+    spec	&lt;PodSpec&gt;
+        Specification of the desired behavior of the pod.
+
+    status	&lt;PodStatus&gt;
+        Most recently observed status of the pod.</code></pre>
+<h3>Step 2: Drill into nested fields using dot notation</h3>
+<p>Navigate down into nested fields by separating field names with a period (<code>.</code>). Drilling into <code>pod.spec</code> reveals the exact configuration options available when defining a Pod's operational workload.</p>
+<pre data-lang="bash"><code>kubectl explain pod.spec</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>KIND:       Pod
+VERSION:    v1
+
+RESOURCE:   spec &lt;PodSpec&gt;
+
+DESCRIPTION:
+    Specification of the desired behavior of the pod. More info:
+    https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+
+FIELDS:
+    activeDeadlineSeconds	&lt;integer&gt;
+        Optional duration in seconds the pod may be active on the node.
+
+    affinity	&lt;Affinity&gt;
+        If specified, the pod's scheduling constraints.
+
+    containers	&lt;[]Container&gt; -required-
+        List of containers belonging to the pod. Containers cannot currently be
+        added or removed. There must be at least one container in a Pod. Cannot
+        be updated.
+
+    dnsPolicy	&lt;string&gt;
+        Set DNS policy for the pod. Defaults to "ClusterFirst".
+
+    restartPolicy	&lt;string&gt;
+        Restart policy for all containers within the pod. One of Always,
+        OnFailure, Never. Default to Always.</code></pre>
+<h3>Step 3: Check types and required fields</h3>
+<p>Drill further down to determine how to format values and spot mandatory settings. Looking at <code>pod.spec.containers</code> shows that <code>containers</code> requires a list (denoted by <code>[]Container</code>), and inspecting inside shows which keys are marked as <strong>-required-</strong>.</p>
+<pre data-lang="bash"><code>kubectl explain pod.spec.containers.image</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>KIND:       Pod
+VERSION:    v1
+
+FIELD:      image &lt;string&gt;
+
+DESCRIPTION:
+    Container image name. More info:
+    https://kubernetes.io/docs/concepts/containers/images This field is
+    optional to allow higher level config management to default or override
+    container images in workload controllers like Deployments and StatefulSets.</code></pre>
+<h3>Step 4: Expand the full tree with recursive view</h3>
+<p>When you need an architectural overview of all available keys under a specific section without reading long descriptions, use the <code>--recursive</code> flag. Grep or scroll through the tree to locate unknown keys quickly.</p>
+<pre data-lang="bash"><code>kubectl explain pod.spec.containers.resources --recursive</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>KIND:       Pod
+VERSION:    v1
+
+RESOURCE:   resources &lt;ResourceRequirements&gt;
+
+DESCRIPTION:
+    Compute Resources required by this container. Cannot be updated. More info:
+    https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+FIELDS:
+    claims	&lt;[]ResourceClaim&gt;
+       name	&lt;string&gt;
+       request	&lt;string&gt;
+    limits	&lt;map[string]Quantity&gt;
+    requests	&lt;map[string]Quantity&gt;</code></pre>
+<h3>Step 5: Verify fields for different API versions</h3>
+<p>Some resources exist in multiple API versions, such as <code>HorizontalPodAutoscaler</code> or <code>Ingress</code>. Pass the <code>--api-version</code> flag to inspect fields for an older or newer version without leaving your terminal.</p>
+<pre data-lang="bash"><code>kubectl explain deployment --api-version=apps/v1</code></pre>
+<p class="label">Expected output</p>
+<pre data-lang="text"><code>KIND:       Deployment
+VERSION:    apps/v1
+
+DESCRIPTION:
+    Deployment enables declarative updates for Pods and ReplicaSets.
+
+FIELDS:
+    apiVersion	&lt;string&gt;
+    kind	&lt;string&gt;
+    metadata	&lt;Object&gt;
+    spec	&lt;DeploymentSpec&gt;
+    status	&lt;DeploymentStatus&gt;</code></pre>
+<h3>Common mistakes</h3>
+<ul><li>Typo in the field name: Running <code>kubectl explain pod.spec.container</code> prints an error saying the field does not exist. Remember that <code>containers</code> is plural; use <code>kubectl explain pod.spec</code> first to check the correct spelling.</li><li>Missing capitalisation context: Querying <code>kubectl explain Pod.Spec</code> works, but searching subfields like <code>pod.spec.RestartPolicy</code> fails. Root kinds can be capitalized, but internal field names are strictly camelCase in Kubernetes schemas.</li><li>Forgetting that brackets mean a list: Seeing <code>&lt;[]Container&gt;</code> means the YAML requires a hyphenated list syntax (<code>- name: ...</code>), not a plain key-value map. Failing to add the list dash causes YAML schema validation errors during <code>kubectl apply</code>.</li><li>Reading outdated local cached schemas: If you recently upgraded your cluster control plane, <code>kubectl explain</code> might still reflect cached discovery docs. Clear the local cache directory at <code>~/.kube/cache</code> to refresh the schemas.</li></ul>
+<h3>Quick recap</h3>
+<ol><li>Run <code>kubectl explain &lt;resource&gt;</code> to inspect the base definition and identify high-level blocks like <code>spec</code> or <code>metadata</code>.</li><li>Use dot syntax like <code>kubectl explain pod.spec</code> to move down the configuration tree.</li><li>Check field signatures to confirm data types (<code>&lt;string&gt;</code>, <code>&lt;integer&gt;</code>, <code>&lt;map&gt;</code>) and identify <code>-required-</code> fields.</li><li>Add <code>--recursive</code> to sub-paths to print a structural tree of available keys without description text.</li><li>Pass <code>--api-version</code> to examine resources when migrating between deprecated and current API schemas.</li></ol></div></section>
+    <div class="handle-wrap">
+      <button class="handle-btn" id="handle-btn" type="button" aria-haspopup="true" aria-expanded="false">@k8s.simplified</button>
+      <div class="handle-menu" id="handle-menu" hidden>
+        <a href="https://www.instagram.com/k8s.simplified/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/k8s.simplified" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.youtube.com/@k8s.simplified" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('handle-btn');
+      var menu = document.getElementById('handle-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function () {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
